@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include <cstddef> // ::std::ptrdiff_t (処理系定義の為)
-
 namespace LEON
 {
 
@@ -25,7 +23,7 @@ private:
     template<typename P>
     static typename P::difference_type* get_difference_type(typename P::difference_type*){return nullptr;}
     template<typename>
-    static ::std::ptrdiff_t* get_difference_type(...){return nullptr;}
+    static long* get_difference_type(...){return nullptr;}
     // rebind<U>
     template<typename P, typename U>
     static typename P::rebind* get_rebind(typename P::rebind*){return nullptr;}
