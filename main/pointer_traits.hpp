@@ -1,6 +1,10 @@
 /*
 * ::std::pointer_traits を模したもの
 * ポインタに対する特殊化は時間があったら実装予定
+*
+* difference_type について:
+* std:: では処理系定義だった為、
+* このクラスでは long を使用する
 */
 
 #pragma once
@@ -8,11 +12,14 @@
 namespace LEON
 {
 
-// SFINAE で型がポインタかどうかを判定
+#define DIFFERENCE_TYPE long
+
 template<typename Ptr>
 class pointer_traits
 {
 private:
+    pointer_traits() = delete;
+
     // SFINAE で型特性を取得する関数の作成
     // element_type
     template<typename P>
@@ -23,7 +30,7 @@ private:
     template<typename P>
     static typename P::difference_type* get_difference_type(typename P::difference_type*){return nullptr;}
     template<typename>
-    static long* get_difference_type(...){return nullptr;}
+    static DIFFERENCE_TYPE* get_difference_type(...){return nullptr;}
     // rebind<U>
     template<typename P, typename U>
     static typename P::rebind* get_rebind(typename P::rebind*){return nullptr;}
