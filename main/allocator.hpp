@@ -7,7 +7,8 @@
 
 #pragma once
 
-#include <cstdlib> // malloc(), free(), true_type
+#include <cstdlib>     // malloc(), free()
+#include <type_traits> // true_type
 
 namespace LEON
 {

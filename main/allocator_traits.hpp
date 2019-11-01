@@ -2,7 +2,13 @@
 * ::std::allocator_traits を模したもの
 */
 
-// 課題
+/*
+*  メンバ型の存在確認方法の実装を変更予定(detection idiom)
+*  変更済み:
+*  difference_type, size_type
+*/
+
+// 
 /* 
 *
 * pointer_traits::rebind の呼び出しが良く解らなかった為、
@@ -76,25 +82,25 @@ public:
     using const_void_pointer = typename ::std::remove_reference<decltype(*get_const_void_pointer<allocator_type>(nullptr))>;
 
 private:
-    // difference_type
-    template<typename A>
-    static typename A::difference_type* get_difference_type(typename A::difference_type*){return nullptr;}
-    template<typename A>
-    static typename A::traits::difference_type* get_difference_type(typename A::traits::difference_type*){return nullptr;}
+    // difference_type(fix)
+    template<typename A, typename P, typename = void>
+    struct _difference_type
+        {using type = typename pointer_traits<P>::difference_type;};
+    template<typename A, typename P>
+    struct _difference_type<A, P, ::std::__void_t<typename A::difference_type>>
+        {using type = typename A::difference_type;};
 public:
-    using difference_type = typename ::std::remove_reference<decltype(*get_difference_type<allocator_type>(nullptr))>::type;
+    using difference_type = typename _difference_type<allocator_type, pointer>::type;
 
 private:
-    // ::std::make_unsigned を使うために difference_type を実体化
-    static difference_type diff_t;
-
-    // size_type
-    template<typename A>
-    static typename A::size_type* get_size_type(typename A::size_type*){return nullptr;}
-    template<typename>
-    static typename ::std::make_unsigned<decltype(diff_t)>* get_size_type(...){return nullptr;}
+    // size_type(fix)
+    template<typename A, typename D, typename = void>
+    struct _size_type : ::std::make_unsigned<D>{};
+    template<typename A, typename D>
+    struct _size_type<A, D, ::std::__void_t<typename A::size_type>>
+        {using type = typename A::size_type;};
 public:
-    using size_type = typename ::std::remove_reference<decltype(*get_size_type<allocator_type>(nullptr))>::type;
+    using size_type = typename _size_type<allocator_type, difference_type>::type;
 
 private:
     // propagate_on_contatypename iner_copy_assignment
@@ -135,10 +141,10 @@ public:
 
 private:
     // rebind_alloc<U>
-    template<typename A, typename U>
+    template<typename A, typename U, typename...>
     static typename A::rebind::other* get_rebind_alloc(typename A::rebind::other*){return nullptr;}
     // template<typename A, typename U, typename... Args>
-    // static A<U, Args>* get_rebind_alloc(...){return nullptr;}
+    // static auto get_rebind_alloc(...)decltype(){return nullptr;}
 public:
     template<typename U>
     using rebind_alloc = typename ::std::remove_reference<decltype(*get_rebind_alloc<allocator_type, U>(nullptr))>::type;

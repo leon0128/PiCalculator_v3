@@ -1,6 +1,4 @@
-#include "pointer_traits.hpp"
-#include "allocator_traits.hpp"
-#include "allocator.hpp"
+#include "vector.hpp"
 
 #include <typeinfo>
 #include <iostream>
@@ -18,10 +16,7 @@ public:
 
 int main(int argc, char** argv)
 {
-    LEON::allocator<long> alloc;
-
-    for(int i = 0; i < 0xfffffffffffffff; i++)
-        alloc.allocate(0xffffffffffffffff);
+    LEON::vector<int> vec;
 
     return 0;
 }
