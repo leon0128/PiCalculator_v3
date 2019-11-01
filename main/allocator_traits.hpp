@@ -18,7 +18,7 @@
 #pragma once
 
 #include "pointer_traits.hpp"
-#include <type_traits> // make_unsigned, is_empty ::std::true_type, ::std::false_type
+#include <type_traits> // make_unsigned, is_empty, remove_reference ::std::true_type, ::std::false_type
 
 namespace LEON
 {
@@ -43,7 +43,7 @@ private:
     static value_type** get_pointer(...){return nullptr;}
 
 public:
-    using pointer = decltype(*get_pointer<allocator_type>(nullptr));
+    using pointer = typename ::std::remove_reference<decltype(*get_pointer<allocator_type>(nullptr))>::type;
 
 private:
     using traits = pointer_traits<pointer>;
@@ -54,7 +54,7 @@ private:
     template<typename>
     static DEFAULT_CONST_POINTER* get_const_pointer(...){return nullptr;} 
 public:
-    using const_pointer = decltype(*get_const_pointer<allocator_type>(nullptr));
+    using const_pointer = typename ::std::remove_reference<decltype(*get_const_pointer<allocator_type>(nullptr))>::type;
 
 private:
     // void_pointer
@@ -63,7 +63,7 @@ private:
     template<typename>
     static DEFAULT_VOID_POINTER* get_void_pointer(...){return nullptr;}
 public:
-    using void_pointer = decltype(*get_void_pointer<allocator_type>(nullptr));
+    using void_pointer = typename ::std::remove_reference<decltype(*get_void_pointer<allocator_type>(nullptr))>::type;
 
 private:
     // const_void_pointer
@@ -72,7 +72,7 @@ private:
     template<typename>
     static DEFAULT_CONST_VOID_POINTER* get_const_void_pointer(...){return nullptr;}
 public:
-    using const_void_pointer = decltype(*get_const_void_pointer<allocator_type>(nullptr));
+    using const_void_pointer = typename ::std::remove_reference<decltype(*get_const_void_pointer<allocator_type>(nullptr))>;
 
 private:
     // difference_type
@@ -81,7 +81,7 @@ private:
     template<typename A>
     static typename A::traits::difference_type* get_difference_type(typename A::traits::difference_type*){return nullptr;}
 public:
-    using difference_type = decltype(*get_difference_type<allocator_type>(nullptr));
+    using difference_type = typename ::std::remove_reference<decltype(*get_difference_type<allocator_type>(nullptr))>::type;
 
 private:
     // ::std::make_unsigned を使うために difference_type を実体化
@@ -93,7 +93,7 @@ private:
     template<typename>
     static typename ::std::make_unsigned<decltype(diff_t)>* get_size_type(...){return nullptr;}
 public:
-    using size_type = decltype(*get_size_type<allocator_type>(nullptr));
+    using size_type = typename ::std::remove_reference<decltype(*get_size_type<allocator_type>(nullptr))>::type;
 
 private:
     // propagate_on_contatypename iner_copy_assignment
@@ -102,7 +102,7 @@ private:
     template<typename>
     static ::std::false_type* get_propagate_on_container_copy_assignment(...){return nullptr;}
 public:
-    using propagate_on_container_copy_assignment = decltype(*get_propagate_on_container_copy_assignment<allocator_type>(nullptr));
+    using propagate_on_container_copy_assignment = typename ::std::remove_reference<decltype(*get_propagate_on_container_copy_assignment<allocator_type>(nullptr))>::type;
 
 private:
     // propagate_on_container_move_assignment
@@ -111,7 +111,7 @@ private:
     template<typename>
     static ::std::false_type* get_propagate_on_container_move_assignment(...){return nullptr;}
 public:
-    using propagate_on_container_move_assignment = decltype(*get_propagate_on_container_move_assignment<allocator_type>(nullptr));
+    using propagate_on_container_move_assignment = typename ::std::remove_reference<decltype(*get_propagate_on_container_move_assignment<allocator_type>(nullptr))>;
 
 private:
     // propagate_on_container_swap
@@ -120,7 +120,7 @@ private:
     template<typename>
     static ::std::false_type* get_propagate_on_container_swap(...){return nullptr;}
 public:
-    using propagate_on_container_swap = decltype(*get_propagate_on_container_swap<allocator_type>(nullptr));
+    using propagate_on_container_swap = typename ::std::remove_reference<decltype(*get_propagate_on_container_swap<allocator_type>(nullptr))>::type;
 
 private:
     // is_always_equal
@@ -130,7 +130,7 @@ private:
     template<typename A>
     static default_is_always_equal* get_is_always_equal(...){return nullptr;}
 public:
-    using is_always_equal = decltype(*get_is_always_equal<allocator_type>(nullptr));
+    using is_always_equal = typename ::std::remove_reference<decltype(*get_is_always_equal<allocator_type>(nullptr))>::type;
 
 private:
     // rebind_alloc<U>
@@ -140,11 +140,22 @@ private:
     // static A<U, Args>* get_rebind_alloc(...){return nullptr;}
 public:
     template<typename U>
-    using rebind_alloc = decltype(*get_rebind_alloc<allocator_type, U>(nullptr));
+    using rebind_alloc = typename ::std::remove_reference<decltype(*get_rebind_alloc<allocator_type, U>(nullptr))>::type;
     
     // rebind_traits<U>
     template<typename U>
     using rebind_trais = allocator_traits<rebind_alloc<U>>;
+
+    // メンバ関数
+    static pointer allocate(allocator_type& alloc,
+                            size_type n)
+        {return alloc.allocate(n);}
+    static pointer allocate(allocator_type& alloc,
+                            size_type n,
+                            const_void_pointer hint)
+        {return alloc.allocate(n, hint);}
+    
+    
 };
 
 };
