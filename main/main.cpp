@@ -1,5 +1,6 @@
 #include "pointer_traits.hpp"
 #include "allocator_traits.hpp"
+#include "allocator.hpp"
 
 #include <typeinfo>
 #include <iostream>
@@ -17,16 +18,10 @@ public:
 
 int main(int argc, char** argv)
 {
-    using allocator_type = std::allocator<long double>;
+    LEON::allocator<long> alloc;
 
-    allocator_type alloc;
+    for(int i = 0; i < 0xfffffffffffffff; i++)
+        alloc.allocate(0xffffffffffffffff);
 
-    long double temp = 0.0;
-
-    std::cout << "max_size: ";
-    LEON::allocator_traits<allocator_type>::construct<long double>(alloc, &temp, 1.0);
-    std::cout << temp << std::endl;
-
-    
     return 0;
 }
