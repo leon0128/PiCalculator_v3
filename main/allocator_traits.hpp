@@ -19,6 +19,8 @@
 *
 * ::std::numeric_limits::max() を type_traits を利用して実装？
 * ::std::forward の実装？
+*
+* construct() の関数呼び出しの分岐
 */
 
 #pragma once
@@ -170,12 +172,39 @@ private:
     static size_type _max_size(A&, ...)
         {return ::std::numeric_limits<size_type>::max() / sizeof(value_type);}
     // construct
-    template<typename A, typename T, typename... Args>
-    static void _construct(A& alloc, T* ptr, long, Args&&... args)
-        {alloc.construct(ptr, ::std::forward<Args>(args)...);}
-    template<typename A, typename T, typename... Args>
-    static void _construct(A& alloc, T* ptr, int, Args&&... args)
-        {::new(static_cast<void*>(ptr)) T(::std::forward<Args>(args)...);}
+    // template<typename A, typename T, typename... Args>
+    // static void _construct(A& alloc, T* ptr, int, Args&&... args)
+    //     {alloc.construct(ptr, ::std::forward<Args>(args)...);}
+    // template<typename A, typename T, typename... Args>
+    // static void _construct(A& alloc, T* ptr, long, Args&&... args)
+    //     {::new(static_cast<void*>(ptr)) T(::std::forward<Args>(args)...);}
+    
+    // // construct(fix)
+    // template<typename T, typename... Args>
+    // struct _construct_check
+    // {
+    //     template<typename A, typename = decltype(::std::declval<A*>()->construct(::std::declval<T*>(), ::std::declval<Args>()...))>
+    //     static ::std::true_type check(int);
+    //     template<typename>
+    //     static ::std::false_type check(...);
+
+    //     using type = decltype(check<allocator_type>(0));
+    // };
+    // template<typename>
+    // struct _construct
+    // {
+    //     template<typename A, typename T, typename... Args>
+    //     static void construct(A&, T* ptr, Args&&... args)
+    //         {::new(static_cast<void*>(ptr)) T(::std::forward<Args>(args)...);}
+    // };
+    // template<typename>
+    // struct _construct<void>
+    // {
+    //     template<typename, typename T, typename... Args>
+    //     static void construct(A& alloc, T* ptr, Args&&... args)
+    //         {alloc.construct(ptr, ::std::forward<Args>(args)...);}
+    // };
+    
     // destroy
     template<typename A, typename T>
     static void _destroy(A& alloc, T* ptr, int)
@@ -216,7 +245,7 @@ public:
     static void construct(allocator_type& alloc,
                           T* ptr,
                           Args&&... args)
-        {_construct<allocator_type, T, Args...>(alloc, ptr, 0L, ::std::forward<Args>(args)...);}
+        {::new(static_cast<void*>(ptr)) T(::std::forward<Args>(args)...);}
     // destroy
     template<typename T>
     static void destroy(allocator_type& alloc,

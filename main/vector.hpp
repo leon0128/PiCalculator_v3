@@ -49,6 +49,27 @@ public:
         mSize(0),
         mCapacity(0),
         mAllocator(){}
+    explicit vector(const allocator_type& alloc):
+        mData(nullptr),
+        mSize(0),
+        mCapacity(0),
+        mAllocator(alloc){}
+    explicit vector(size_type n):
+        mData(nullptr),
+        mSize(n),
+        mCapacity(n * 2),
+        mAllocator()
+    {
+        // デフォルトコンストラクタの呼び出し
+        mData = traits::allocate(mAllocator,
+                                 mCapacity);
+        for(size_type i = 0; i < n; i++)
+        {
+            traits::construct(mAllocator,
+                              mData + i);
+        }
+    }
+        
     
 
 private:
