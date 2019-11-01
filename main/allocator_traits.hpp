@@ -1,25 +1,26 @@
 /*
 * ::std::allocator_traits を模したもの
-* 
-* difference_type を 符号なしに変換する方法が解らなかったため,
-* <type_traits> を include
+*/
+
+// 課題
+/* 
 *
 * pointer_traits::rebind の呼び出しが良く解らなかった為、
 * const_pointer, void_pointer, const_void_pointer
 * はデフォルトを仮定義
 *
-* :
-* 以下の実行結果は, std::, LEON:: 共に期待した値が得られた。
-* typeid(typename pointer_traits<pointer>::rebind<const value_type>)
-*
 * rebind_alloc<U>, rebind_traits<U> の実装は要調整
+*
+* ::std::numeric_limits::max() を type_traits を利用して実装？
+* ::std::forward の実装？
 */
 
 #pragma once
 
 #include "pointer_traits.hpp"
-#include <type_traits> // make_unsigned, is_empty, remove_reference ::std::true_type, ::std::false_type
-
+#include <type_traits>         // make_unsigned, is_empty, remove_reference ::std::true_type, ::std::false_type
+#include <limits>              // numeric_limits::max (時間があれば max() は実装するかも)
+#include <utility>             // forward
 namespace LEON
 {
 
@@ -146,16 +147,78 @@ public:
     template<typename U>
     using rebind_trais = allocator_traits<rebind_alloc<U>>;
 
+private:
+    // allocator_type に対応する関数が存在するか確認するための関数
+    // allocate(hint)
+    template<typename A>
+    static pointer _allocate(A& alloc, size_type n, const_void_pointer hint, int)
+        {return alloc.allocate(n, hint);}
+    template<typename A>
+    static pointer _allocate(A& alloc, size_type n, const_void_pointer, ...)
+        {return alloc.allocate(n);}
+    // max_size
+    template<typename A>
+    static auto _max_size(A& alloc, int)->decltype(alloc.max_size())
+        {return alloc.max_size();}
+    template<typename A>
+    static size_type _max_size(A&, ...)
+        {return ::std::numeric_limits<size_type>::max() / sizeof(value_type);}
+    // construct
+    template<typename A, typename T, typename... Args>
+    static void _construct(A& alloc, T* ptr, long, Args&&... args)
+        {alloc.construct(ptr, ::std::forward<Args>(args)...);}
+    template<typename A, typename T, typename... Args>
+    static void _construct(A& alloc, T* ptr, int, Args&&... args)
+        {::new(static_cast<void*>(ptr)) T(::std::forward<Args>(args)...);}
+    // destroy
+    template<typename A, typename T>
+    static void _destroy(A& alloc, T* ptr, int)
+        {alloc.destroy(ptr);}
+    template<typename A, typename T>
+    static void _destroy(A& alloc, T* ptr, ...)
+        {ptr->~T();}
+    // select_on_container_copy_construction()
+    template<typename A>
+    static allocator_type _select_on_container_copy_construction(const A& alloc, int)
+        {return alloc.select_on_container_copy_construction();}
+    template<typename A>
+    static allocator_type _select_on_container_copy_construction(const A& alloc, ...)
+        {return alloc;}
+
+public:
     // メンバ関数
+    // allocate
     static pointer allocate(allocator_type& alloc,
                             size_type n)
         {return alloc.allocate(n);}
     static pointer allocate(allocator_type& alloc,
                             size_type n,
                             const_void_pointer hint)
-        {return alloc.allocate(n, hint);}
-    
-    
+        {return _allocate<allocator_type>(alloc, n, hint, 0);}
+    // deallocate
+    static void deallocate(allocator_type& alloc,
+                           pointer ptr,
+                           size_type n)
+        {alloc.deallocate(ptr, n);}
+    // max_size
+    static size_type max_size(allocator_type& alloc)                
+        {return _max_size<allocator_type>(alloc, 0);}
+    static size_type max_size(const allocator_type& alloc) noexcept
+        {return _max_size<const allocator_type>(alloc, 0);}
+    // construct
+    template<typename T, typename... Args>
+    static void construct(allocator_type& alloc,
+                          T* ptr,
+                          Args&&... args)
+        {_construct<allocator_type, T, Args...>(alloc, ptr, 0L, ::std::forward<Args>(args)...);}
+    // destroy
+    template<typename T>
+    static void destroy(allocator_type& alloc,
+                        T* ptr)
+        {_destroy<allocator_type, T>(alloc, ptr);}
+    // select_on_container_copy_construction
+    static allocator_type select_on_container_copy_construction(const allocator_type& alloc)
+        {return _select_on_container_copy_construction<allocator_type>(alloc, 0);}
 };
 
 };

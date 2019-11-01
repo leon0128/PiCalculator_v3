@@ -12,26 +12,21 @@ public:
     using value_type = int;
     using pointer = void*;
     using difference_type = long;
+
 };
 
 int main(int argc, char** argv)
 {
-    using allocator_type = std::allocator<float>;
-
+    using allocator_type = std::allocator<long double>;
 
     allocator_type alloc;
 
-    // std::cout << typeid(typename std::allocator_traits<allocator_type>::size_type).name()
-    //           << std::endl;
-    // std::cout << typeid(typename LEON::allocator_traits<allocator_type>::size_type).name()
-    //           << std::endl;
+    long double temp = 0.0;
 
-    // int i = 1;
-    std::allocator_traits<allocator_type>::allocate(alloc, 1);
-    LEON::allocator_traits<allocator_type>::allocate(alloc, 1);
-    // alloc.allocate(1);
+    std::cout << "max_size: ";
+    LEON::allocator_traits<allocator_type>::construct<long double>(alloc, &temp, 1.0);
+    std::cout << temp << std::endl;
 
-    // std::allocator_traits<allocator_type>::allocate
-
+    
     return 0;
 }
