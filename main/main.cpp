@@ -18,19 +18,18 @@ public:
 
 int main(int argc, char** argv)
 {
-    LEON::vector<int> vec;
+    LEON::vector<Token> vec(3);
     // vec.reserve(3);
 
     Token tok;
     std::cout << "===" << std::endl;
 
-    auto iter = vec.insert(vec.begin(), 5, 5);
-    vec.insert(vec.begin(), {1, 4, 6, 8, 0});
+    vec.erase(vec.begin());
 
     std::cout << "===" << std::endl;
 
-    for(; iter != vec.end(); iter++)
-        std::cout << "value: " << *iter << std::endl;
+    // for(; iter != vec.end(); iter++)
+    //     std::cout << "value: " << *iter << std::endl;
 
     std::cout << "size: " << vec.size() << std::endl;
 

@@ -1,6 +1,7 @@
 /* 動的配列 vector
 * 
 * ::std::vector 同様、各要素はメモリ上に連続して配置される
+* bool 特殊化は無理
 *
 *  template を使用した overload が正しく動作しない
 *  優先度の問題？
@@ -275,6 +276,7 @@ public:
     size_type max_size() const noexcept {return traits::max_size(mAllocator);}
     size_type capacity() const noexcept {return mCapacity;}
     bool      empty()    const noexcept {return (mSize == 0) ? true : false;}
+    // resize
     void resize(size_type sz, const value_type& value)
     {
         size_type diff = (mSize > sz) ? (mSize - sz) : (sz - mSize);
@@ -300,6 +302,7 @@ public:
     }
     void resize(size_type sz)
         {resize(sz, T());}
+    // reserve
     void reserve(size_type sz)
     {
         if(sz <= mCapacity)
@@ -345,6 +348,7 @@ public:
         
         mCapacity = sz;
     }
+    // shrink_to_fit
     void shrink_to_fit()
     {
         pointer lastData = mData;
@@ -394,6 +398,7 @@ public:
     const_reference front()                 const          {return mData[0];}
     reference       back()                                 {return mData[mSize - 1];}
     const_reference back()                  const          {return mData[mSize - 1];}
+    // at
     reference at(size_type n)
     {
         if(n >= mSize)
@@ -408,13 +413,11 @@ public:
     }
 
     // コンテナの変更
+    // push_back
     void push_back(const value_type& value)
     {
         if(mSize >= mCapacity)
-        {
-            size_type sz = (mSize * 2 > mSize) ? mSize * 2 : max_size();
-            reserve(sz);
-        }
+            reserve((mSize * 2 > mSize) ? mSize * 2 : max_size());
 
         traits::construct(mAllocator,
                           mData + mSize,
@@ -424,30 +427,26 @@ public:
     void push_back(value_type&& value)
     {
         if(mSize >= mCapacity)
-        {
-            size_type sz = (mSize * 2 > mSize) ? mSize * 2 : max_size();
-            reserve(sz);
-        }
+            reserve((mSize * 2 > mSize) ? mSize * 2 : max_size());
 
         traits::construct(mAllocator,
                           mData + mSize,
                           ::std::move(value));
         mSize++;
     }
+    // emplace_back
     template<typename... Args>
     void emplace_back(Args&&... args)
     {
         if(mSize >= mCapacity)
-        {
-            size_type sz = (mSize * 2 > mSize) ? mSize * 2 : max_size();
-            reserve(sz);
-        }
+            reserve((mSize * 2 > mSize) ? mSize * 2 : max_size());
 
         traits::construct(mAllocator,
                           mData + mSize,
                           args...);
         mSize++;
     }
+    // pop_back
     void pop_back()
     {
         if(!empty())
@@ -460,6 +459,7 @@ public:
             mSize--;
         }
     }
+    // insert
     iterator insert(const_iterator pos,
                     const value_type& value)
         {insert(pos, 1, value);}
@@ -467,10 +467,7 @@ public:
                     value_type&& value)
     {
         if(mSize >= mCapacity)
-        {
-            size_type sz = (mSize * 2 > mSize) ? mSize * 2 : max_size();
-            reserve(sz);
-        }
+            reserve((mSize * 2 > mSize) ? mSize * 2 : max_size());
 
         for(size_type i = mSize; i > pos.mIndex; i--)
         {
@@ -496,10 +493,7 @@ public:
                     const value_type& value)
     {
         if(mSize + n - 1 >= mCapacity)
-        {
-            size_type sz = ((mSize + n - 1) * 2 > mSize) ? (mSize + n - 1) * 2 : max_size();
-            reserve(sz);
-        }
+            reserve(((mSize + n - 1) * 2 > mSize) ? (mSize + n - 1) * 2 : max_size());
 
         for(size_type i = mSize; i > pos.mIndex; i--)
         {
@@ -528,10 +522,8 @@ public:
     {
         size_type n = list.size();
         if(mSize + n - 1 >= mCapacity)
-        {
-            size_type sz = ((mSize + n - 1) * 2 > mSize) ? (mSize + n - 1) * 2 : max_size();
-            reserve(sz);
-        }
+            reserve(((mSize + n - 1) * 2 > mSize) ? (mSize + n - 1) * 2 : max_size());
+
 
         for(size_type i = mSize; i > pos.mIndex; i--)
         {
@@ -554,6 +546,63 @@ public:
 
         mSize += n;
         return iterator(this, pos.mIndex);
+    }
+    // emplace
+    template<typename... Args>
+    iterator emplace(const_iterator pos,
+                     Args&&... args)
+    {
+        if(mSize >= mCapacity)
+            reserve((mSize * 2 > mSize) ? mSize * 2 : max_size());
+
+        for(size_type i = mSize; i > pos.mIndex; i--)
+        {
+            traits::construct(mAllocator,
+                              mData + i,
+                              ::std::move(*(mData + i - 1)));
+            if(!::std::is_trivially_destructible<value_type>::value)
+            {
+                traits::destroy(mAllocator,
+                                mData + i - 1);
+            }
+        }
+
+        traits::construct(mAllocator,
+                          mData + pos.mIndex,
+                          ::std::forward<Args>(args)...);
+
+        mSize++;
+        return iterator(this, pos.mIndex);
+    }
+    // erase
+    iterator erase(const_iterator pos)
+        {return erase(pos, pos + 1);}
+    iterator erase(const_iterator first,
+                   const_iterator last)
+    {
+        if(!::std::is_trivially_destructible<value_type>::value)
+        {
+            for(auto iter = first; iter != last; iter++)
+            {
+                traits::destroy(mAllocator,
+                                &*iter);
+            }
+        }
+
+        auto n = last - first;
+        if(::std::is_move_assignable<value_type>::value)
+        {
+            for(size_type i = last.mIndex; i < mSize; i++)
+                *(mData + i - n) = ::std::move(*(mData + i));
+        }
+        else
+        {
+            for(size_type i = last.mIndex; i < mSize; i++)
+                *(mData + i - n) = *(mData + i);
+        }
+
+        mSize -= last - first;
+        return iterator(this, last.mIndex);
     }
 
 private:
