@@ -20,7 +20,7 @@
 * ::std::numeric_limits::max() を type_traits を利用して実装？
 * ::std::forward の実装？
 *
-* construct() の関数呼び出しの分岐
+* 各メンバ関数の呼び出しの分岐
 */
 
 #pragma once
@@ -158,16 +158,16 @@ public:
 private:
     // allocator_type に対応する関数が存在するか確認するための関数
     // allocate(hint)
-    template<typename A>
-    static pointer _allocate(A& alloc, size_type n, const_void_pointer hint, int)
-        {return alloc.allocate(n, hint);}
+    // template<typename A>
+    // static pointer _allocate(A& alloc, size_type n, const_void_pointer hint, int)
+    //     {return alloc.allocate(n, hint);}
     template<typename A>
     static pointer _allocate(A& alloc, size_type n, const_void_pointer, ...)
         {return alloc.allocate(n);}
     // max_size
-    template<typename A>
-    static auto _max_size(A& alloc, int)->decltype(alloc.max_size())
-        {return alloc.max_size();}
+    // template<typename A>
+    // static auto _max_size(A& alloc, int)->decltype(alloc.max_size())
+    //     {return alloc.max_size();}
     template<typename A>
     static size_type _max_size(A&, ...)
         {return ::std::numeric_limits<size_type>::max() / sizeof(value_type);}
@@ -206,16 +206,16 @@ private:
     // };
     
     // destroy
-    template<typename A, typename T>
-    static void _destroy(A& alloc, T* ptr, int)
-        {alloc.destroy(ptr);}
+    // template<typename A, typename T>
+    // static void _destroy(A& alloc, T* ptr, int)
+    //     {alloc.destroy(ptr);}
     template<typename A, typename T>
     static void _destroy(A& alloc, T* ptr, ...)
         {ptr->~T();}
     // select_on_container_copy_construction()
-    template<typename A>
-    static allocator_type _select_on_container_copy_construction(const A& alloc, int)
-        {return alloc.select_on_container_copy_construction();}
+    // template<typename A>
+    // static allocator_type _select_on_container_copy_construction(const A& alloc, int)
+    //     {return alloc.select_on_container_copy_construction();}
     template<typename A>
     static allocator_type _select_on_container_copy_construction(const A& alloc, ...)
         {return alloc;}
