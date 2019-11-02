@@ -16,18 +16,23 @@ public:
 
 int main(int argc, char** argv)
 {
-    LEON::vector<float> vec{1, 4, 5, 7, 9, 1, 4, 4};
+    LEON::vector<Token> vec(1);
 
     auto arr = {1, 4, 6};
 
+    std::cout << "===" << std::endl;
+    vec.reserve(1000);
+
     // vec = arr;
+
+    // vec.resize(11, 5);
 
     std::cout << "type_id: "
               << typeid(arr).name()
               << std::endl;
 
-    for(auto iter = vec.begin(); iter != vec.end(); iter++)
-        ::std::cout << "value: " << *iter << std::endl;
+    // for(auto iter = vec.begin(); iter != vec.end(); iter++)
+        // ::std::cout << "value: " << *iter << std::endl;
 
     return 0;
 }

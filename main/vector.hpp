@@ -7,6 +7,8 @@
 *  vector() について、
 *  イテレータ以外もこっちが優先的に使われる問題(未実装)
 *  initializer_list を使用した際に正しく処理されない
+*
+*  copyが禁止されているオブジェクトのムーブが正しく処理されない
 */
 
 #pragma once
@@ -16,7 +18,7 @@
 #include "iterator.hpp"
 #include "reverse_iterator.hpp"
 
-#include <type_traits> // is_trivially_destructible
+#include <type_traits> // is_trivially_destructible, is_copy_constructible
 #include <utility>     // move, initializer_list
 
 namespace LEON
@@ -259,7 +261,123 @@ public:
     const_reverse_iterator crbegin() const noexcept {return reverse_iterator(this);}
     const_reverse_iterator crend()   const noexcept {return reverse_iterator(this, mSize);}
 
+    // 領域
+    size_type size()     const noexcept {return mSize;}
+    size_type max_size() const noexcept {return traits::max_size(mAllocator);}
+    size_type capacity() const noexcept {return mCapacity;}
+    bool      empty()    const noexcept {return (mSize == 0) ? true : false;}
+    void resize(size_type sz, const value_type& value)
+    {
+        size_type diff = (mSize > sz) ? (mSize - sz) : (sz - mSize);
+        
+        if(mSize > sz)
+        {
+            for(size_type i = 0; i < diff; i++)
+                pop_back();
+        }
+        else if(mSize < sz)
+        {
+            if(sz > mCapacity)
+                reserve(sz);
 
+            for(size_type i = 0; i < diff; i++)
+            {
+                traits::construct(mAllocator,
+                                  mData + mSize + i,
+                                  value);
+            }
+            mSize = sz;
+        }
+    }
+    void resize(size_type sz)
+        {resize(sz, T());}
+    void reserve(size_type sz)
+    {
+        if(sz <= mCapacity)
+            return;
+
+        if(sz > max_size())
+            throw ::std::length_error("The maximum number of elementes that can be allocated has been exceeded.");
+        
+        pointer lastData = mData;
+        mData = traits::allocate(mAllocator,
+                                 sz);
+        
+        if(::std::is_copy_constructible<value_type>::value)
+        {
+            for(size_type i = 0; i < mSize; i++)
+            {
+                traits::construct(mAllocator,
+                                  mData + i,
+                                  *(lastData + i));
+            }
+        }
+        else
+        {
+            for(size_type i = 0; i < mSize; i++)
+            {
+                traits::construct(mAllocator,
+                                  mData + i,
+                                  ::std::move(*(lastData + i)));
+            }
+        }
+
+        if(!::std::is_trivially_destructible<value_type>::value)
+        {
+            for(size_type i = 0; i < mSize; i++)
+            {
+                traits::destroy(mAllocator,
+                                lastData + i);
+            }
+        }
+        traits::deallocate(mAllocator,
+                           lastData,
+                           mCapacity);
+        
+        mCapacity = sz;
+    }
+    void shrink_to_fit()
+    {
+        pointer lastData = mData;
+        mData = traits::allocate(mAllocator,
+                                 mSize);
+        
+        if(::std::is_copy_constructible<value_type>::value)
+        {
+            for(size_type i = 0; i < mSize; i++)
+            {
+                traits::construct(mAllocator,
+                                  mData + i,
+                                  *(lastData + i));
+            }
+        }
+        else
+        {
+            for(size_type i = 0; i < mSize; i++)
+            {
+                traits::construct(mAllocator,
+                                  mData + i,
+                                  ::std::move(*(lastData + i)));
+            }
+        }
+
+        if(!::std::is_trivially_destructible<value_type>::value)
+        {
+            for(size_type i = 0; i < mSize; i++)
+            {
+                traits::destroy(mAllocator,
+                                lastData + i);
+            }
+        }
+        traits::deallocate(mAllocator,
+                           lastData,
+                           mCapacity);
+        
+        mCapacity = mSize;
+    }
+
+
+    void pop_back(){}
 
 private:
     pointer   mData;           // 先頭アドレス
