@@ -686,69 +686,69 @@ public:
     allocator_type get_allocator() const noexcept
         {return traits::select_on_container_copy_construction(mAllocator);}
 
-    // 比較演算子
-    template<typename _T, typename _A>
-    friend bool operator==(const vector<_T, _A>& lhs,
-                           const vector<_T, _A>& rhs)
-    {
-        if(lhs.size() != rhs.size())
-            return false;
-        
-        for(size_type i = 0; i < lhs.size(); i++)
-        {
-            if(*lhs[i] != *rhs[i])
-                return false;
-        }
-
-        return true;
-    }
-    template<typename _T, typename _A>
-    friend bool operator!=(const vector<_T, _A>& lhs,
-                           const vector<_T, _A>& rhs)
-        {return !(lhs == rhs);}
-    template<typename _T, typename _A>
-    friend bool operator<(const vector<_T, _A>& lhs,
-                     const vector<_T, _A>& rhs)
-    {
-        if(lhs.size() < rhs.size())
-            return true;
-        
-        if(lhs.back() < rhs.back())
-            return true;
-        else
-            return false;
-    }
-    template<typename _T, typename _A>
-    friend bool operator<=(const vector<_T, _A>& lhs,
-                     const vector<_T, _A>& rhs)
-    {
-        if(lhs.size() <= rhs.size())
-            return true;
-        
-        if(lhs.back() <= rhs.back())
-            return true;
-        else
-            return false;
-    }
-    template<typename _T, typename _A>
-    friend bool operator>(const vector<_T, _A>& lhs,
-                          const vector<_T, _A>& rhs)
-        {return !(lhs <= rhs);}
-    template<typename _T, typename _A>
-    friend bool operator>=(const vector<_T, _A>& lhs,
-                           const vector<_T, _A>& rhs)
-        {return !(lhs < rhs);}
-    // swap
-    template<typename _T, typename _A>
-    friend void swap(vector<_T, _A>& lhs,
-                     vector<_T, _A>& rhs)
-        {lhs.swap(rhs);}
-
 private:
     pointer   mData;           // 先頭アドレス
     size_type mSize;           // 格納されてる要素数
     size_type mCapacity;       // メモリを再確保せずに格納できる最大要素数
     allocator_type mAllocator; // アロケータ
 };
+
+// 比較演算子
+template<typename _T, typename _A>
+bool operator==(const vector<_T, _A>& lhs,
+                const vector<_T, _A>& rhs)
+{
+    if(lhs.size() != rhs.size())
+        return false;
+    
+    for(auto i = 0; i < lhs.size(); i++)
+    {
+        if(*lhs[i] != *rhs[i])
+            return false;
+    }
+
+    return true;
+}
+template<typename _T, typename _A>
+bool operator!=(const vector<_T, _A>& lhs,
+                const vector<_T, _A>& rhs)
+    {return !(lhs == rhs);}
+template<typename _T, typename _A>
+bool operator<(const vector<_T, _A>& lhs,
+               const vector<_T, _A>& rhs)
+{
+    if(lhs.size() < rhs.size())
+        return true;
+    
+    if(lhs.back() < rhs.back())
+        return true;
+    else
+        return false;
+}
+template<typename _T, typename _A>
+bool operator<=(const vector<_T, _A>& lhs,
+                const vector<_T, _A>& rhs)
+{
+    if(lhs.size() <= rhs.size())
+        return true;
+    
+    if(lhs.back() <= rhs.back())
+        return true;
+    else
+        return false;
+}
+template<typename _T, typename _A>
+bool operator>(const vector<_T, _A>& lhs,
+               const vector<_T, _A>& rhs)
+    {return !(lhs <= rhs);}
+template<typename _T, typename _A>
+bool operator>=(const vector<_T, _A>& lhs,
+                const vector<_T, _A>& rhs)
+    {return !(lhs < rhs);}
+// swap
+template<typename _T, typename _A>
+void swap(vector<_T, _A>& lhs,
+          vector<_T, _A>& rhs)
+    {lhs.swap(rhs);}
 
 };
