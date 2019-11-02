@@ -624,6 +624,29 @@ public:
         other.mCapacity  = cap;
         other.mAllocator = all;
     }
+    // clear
+    void clear()
+    {
+        if(!::std::is_trivially_destructible<value_type>::value)
+        {
+            for(size_type i = 0; i < mSize; i++)
+            {
+                traits::destroy(mAllocator,
+                                mData + i);
+            }
+        }
+
+        traits::deallocate(mAllocator,
+                           mData,
+                           mCapacity);
+        mData = nullptr;
+        mSize = 0;
+        mCapacity = 0;
+    }
+
+    // アロケータ
+    allocator_type get_allocator() const noexcept
+        {return traits::select_on_container_copy_construction(mAllocator);}
 
 private:
     pointer   mData;           // 先頭アドレス

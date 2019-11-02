@@ -28,12 +28,12 @@ int main(int argc, char** argv)
     Token tok;
     std::cout << "===" << std::endl;
 
-    vec.swap(vec2);
+    vec.clear();
 
     std::cout << "===" << std::endl;
 
-    std::cout << "vec : " << vec.data() << std::endl;
-    std::cout << "vec2: " << vec2.data() << std::endl;
+    std::cout << "vec : " << vec.capacity() << std::endl;
+    std::cout << "vec2: " << vec2.capacity() << std::endl;
 
     // for(; iter != vec.end(); iter++)
     //     std::cout << "value: " << *iter << std::endl;
