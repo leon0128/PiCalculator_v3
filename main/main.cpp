@@ -19,17 +19,19 @@ public:
 int main(int argc, char** argv)
 {
     LEON::vector<Token> vec(3);
-    LEON::vector<Token> vec2(1);
+    std::vector<Token> vec2(1);
     // vec.reserve(3);
 
     std::cout << "vec : " << vec.data() << std::endl;
     std::cout << "vec2: " << vec2.data() << std::endl;
 
+    std::initializer_list<Token> a{};
+
     Token tok;
     std::cout << "===" << std::endl;
 
-    vec.clear();
-
+    vec.assign(a);
+    
     std::cout << "===" << std::endl;
 
     std::cout << "vec : " << vec.capacity() << std::endl;

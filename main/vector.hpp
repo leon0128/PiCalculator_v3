@@ -16,7 +16,6 @@
 *  コンストラクタで大きさを指定した時にlength_error か、
 *  capacity がオーバーフローのチェックを追加
 *
-*  assign() は後で実装
 */
 
 #pragma once
@@ -413,11 +412,50 @@ public:
     }
 
     // コンテナの変更
+    // assign
+    void assign(size_type n, const value_type& value)
+    {
+        clear();
+
+        size_type sz = (n * 2 >= n) ? n * 2 : max_size();
+        mData = traits::allocate(mAllocator,
+                                 sz);
+        
+        
+        for(size_type i = 0; i < n; i++)
+        {
+            traits::construct(mAllocator,
+                              mData + i,
+                              value);
+        }
+
+        mSize = n;
+        mCapacity = sz;
+    }
+    void assign(::std::initializer_list<value_type> list)
+    {
+        clear();
+
+        size_type sz = (list.size() * 2 >= list.size()) ? list.size() * 2 : max_size();
+        mData = traits::allocate(mAllocator,
+                                 sz);
+        
+        
+        for(size_type i = 0; i < list.size(); i++)
+        {
+            traits::construct(mAllocator,
+                              mData + i,
+                              *(list.begin() + i));
+        }
+
+        mSize = list.size();
+        mCapacity = sz;
+    }
     // push_back
     void push_back(const value_type& value)
     {
         if(mSize >= mCapacity)
-            reserve((mSize * 2 > mSize) ? mSize * 2 : max_size());
+            reserve((mSize * 2 >= mSize) ? mSize * 2 : max_size());
 
         traits::construct(mAllocator,
                           mData + mSize,
@@ -427,7 +465,7 @@ public:
     void push_back(value_type&& value)
     {
         if(mSize >= mCapacity)
-            reserve((mSize * 2 > mSize) ? mSize * 2 : max_size());
+            reserve((mSize * 2 >= mSize) ? mSize * 2 : max_size());
 
         traits::construct(mAllocator,
                           mData + mSize,
@@ -439,7 +477,7 @@ public:
     void emplace_back(Args&&... args)
     {
         if(mSize >= mCapacity)
-            reserve((mSize * 2 > mSize) ? mSize * 2 : max_size());
+            reserve((mSize * 2 >= mSize) ? mSize * 2 : max_size());
 
         traits::construct(mAllocator,
                           mData + mSize,
@@ -467,7 +505,7 @@ public:
                     value_type&& value)
     {
         if(mSize >= mCapacity)
-            reserve((mSize * 2 > mSize) ? mSize * 2 : max_size());
+            reserve((mSize * 2 >= mSize) ? mSize * 2 : max_size());
 
         for(size_type i = mSize; i > pos.mIndex; i--)
         {
@@ -493,7 +531,7 @@ public:
                     const value_type& value)
     {
         if(mSize + n - 1 >= mCapacity)
-            reserve(((mSize + n - 1) * 2 > mSize) ? (mSize + n - 1) * 2 : max_size());
+            reserve(((mSize + n - 1) * 2 >= mSize) ? (mSize + n - 1) * 2 : max_size());
 
         for(size_type i = mSize; i > pos.mIndex; i--)
         {
@@ -522,7 +560,7 @@ public:
     {
         size_type n = list.size();
         if(mSize + n - 1 >= mCapacity)
-            reserve(((mSize + n - 1) * 2 > mSize) ? (mSize + n - 1) * 2 : max_size());
+            reserve(((mSize + n - 1) * 2 >= mSize) ? (mSize + n - 1) * 2 : max_size());
 
 
         for(size_type i = mSize; i > pos.mIndex; i--)
@@ -553,7 +591,7 @@ public:
                      Args&&... args)
     {
         if(mSize >= mCapacity)
-            reserve((mSize * 2 > mSize) ? mSize * 2 : max_size());
+            reserve((mSize * 2 >= mSize) ? mSize * 2 : max_size());
 
         for(size_type i = mSize; i > pos.mIndex; i--)
         {
@@ -647,6 +685,64 @@ public:
     // アロケータ
     allocator_type get_allocator() const noexcept
         {return traits::select_on_container_copy_construction(mAllocator);}
+
+    // 比較演算子
+    template<typename _T, typename _A>
+    friend bool operator==(const vector<_T, _A>& lhs,
+                           const vector<_T, _A>& rhs)
+    {
+        if(lhs.size() != rhs.size())
+            return false;
+        
+        for(size_type i = 0; i < lhs.size(); i++)
+        {
+            if(*lhs[i] != *rhs[i])
+                return false;
+        }
+
+        return true;
+    }
+    template<typename _T, typename _A>
+    friend bool operator!=(const vector<_T, _A>& lhs,
+                           const vector<_T, _A>& rhs)
+        {return !(lhs == rhs);}
+    template<typename _T, typename _A>
+    friend bool operator<(const vector<_T, _A>& lhs,
+                     const vector<_T, _A>& rhs)
+    {
+        if(lhs.size() < rhs.size())
+            return true;
+        
+        if(lhs.back() < rhs.back())
+            return true;
+        else
+            return false;
+    }
+    template<typename _T, typename _A>
+    friend bool operator<=(const vector<_T, _A>& lhs,
+                     const vector<_T, _A>& rhs)
+    {
+        if(lhs.size() <= rhs.size())
+            return true;
+        
+        if(lhs.back() <= rhs.back())
+            return true;
+        else
+            return false;
+    }
+    template<typename _T, typename _A>
+    friend bool operator>(const vector<_T, _A>& lhs,
+                          const vector<_T, _A>& rhs)
+        {return !(lhs <= rhs);}
+    template<typename _T, typename _A>
+    friend bool operator>=(const vector<_T, _A>& lhs,
+                           const vector<_T, _A>& rhs)
+        {return !(lhs < rhs);}
+    // swap
+    template<typename _T, typename _A>
+    friend void swap(vector<_T, _A>& lhs,
+                     vector<_T, _A>& rhs)
+        {lhs.swap(rhs);}
 
 private:
     pointer   mData;           // 先頭アドレス
