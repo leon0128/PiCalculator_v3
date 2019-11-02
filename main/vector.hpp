@@ -6,6 +6,7 @@
 *  template<typename InputIter>
 *  vector() について、
 *  イテレータ以外もこっちが優先的に使われる問題(未実装)
+*  initializer_list を使用した際に正しく処理されない
 */
 
 #pragma once
@@ -240,9 +241,25 @@ public:
                               mData + i,
                               *(list.begin() + i));
         }
+
+        return *this;
     }
 
-    
+    // イテレータ
+    iterator               begin()         noexcept {return iterator(this);}
+    const_iterator         begin()   const noexcept {return iterator(this);}
+    iterator               end()           noexcept {return iterator(this, mSize);}
+    const_iterator         end()     const noexcept {return iterator(this, mSize);}
+    const_iterator         cbegin()  const noexcept {return iterator(this);}
+    const_iterator         cend()    const noexcept {return iterator(this, mSize);}
+    reverse_iterator       rbegin()        noexcept {return reverse_iterator(this);}
+    const_reverse_iterator rbegin()  const noexcept {return reverse_iterator(this);}
+    reverse_iterator       rend()          noexcept {return reverse_iterator(this, mSize);}
+    const_reverse_iterator rend()    const noexcept {return reverse_iterator(this, mSize);}
+    const_reverse_iterator crbegin() const noexcept {return reverse_iterator(this);}
+    const_reverse_iterator crend()   const noexcept {return reverse_iterator(this, mSize);}
+
+
 
 private:
     pointer   mData;           // 先頭アドレス

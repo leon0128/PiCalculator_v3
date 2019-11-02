@@ -72,8 +72,8 @@ public:
                      const iterator& rhs){auto tmp = *lhs; *lhs = *rhs; *rhs = tmp;}
 
 private:
-    Container* mContainer; // container
-    size_type  mIndex;     // index
+    const Container* mContainer; // container
+    size_type        mIndex;     // index
 };
 
 };

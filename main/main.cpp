@@ -16,21 +16,18 @@ public:
 
 int main(int argc, char** argv)
 {
-    using vector = LEON::vector<Token>;
+    LEON::vector<float> vec{1, 4, 5, 7, 9, 1, 4, 4};
 
-    LEON::allocator<Token> alloc;
+    auto arr = {1, 4, 6};
 
-    vector src(1);
-    vector dst(src);
+    // vec = arr;
 
-    // Token tok;
-    // LEON::vector<Token> vec(1, tok);
+    std::cout << "type_id: "
+              << typeid(arr).name()
+              << std::endl;
 
-    // vector vec1;        // 1
-    // vector vec2(alloc); // 2
-    // vector vec3(1);     // 3
-    // vector vec4(1, 1);  // 4
-    // vector vec5(vec.begin(), vec.end());
+    for(auto iter = vec.begin(); iter != vec.end(); iter++)
+        ::std::cout << "value: " << *iter << std::endl;
 
     return 0;
 }
