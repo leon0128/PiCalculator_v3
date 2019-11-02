@@ -376,6 +376,27 @@ public:
         mCapacity = mSize;
     }
 
+    // 要素アクセス
+    reference       operator[](size_type n)                {return mData[n];}
+    const_reference operator[](size_type n) const          {return mData[n];}
+    pointer         data()                        noexcept {return mData;}
+    const_pointer   data()                  const noexcept {return mData;}
+    reference       front()                                {return mData[0];}
+    const_reference front()                 const          {return mData[0];}
+    reference       back()                                 {return mData[mSize - 1];}
+    const_reference back()                  const          {return mData[mSize - 1];}
+    reference at(size_type n)
+    {
+        if(n >= mSize)
+            throw ::std::out_of_range("Invalid index.");
+        return mData[n];
+    }
+    const_reference at(size_type n) const
+    {
+        if(n >= mSize)
+            throw ::std::out_of_range("Invalid index.");
+        return mData[n];
+    }
 
     void pop_back(){}
 
