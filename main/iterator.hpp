@@ -12,10 +12,16 @@
 namespace LEON
 {
 
+template<typename, typename>
+class vector;
+
 template<typename Container>
 class Iterator
 {
 private:
+    friend vector<typename Container::value_type,
+                  typename Container::allocator_type>;
+
     using iterator  = Iterator;
 
 public:

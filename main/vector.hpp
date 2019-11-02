@@ -2,13 +2,20 @@
 * 
 * ::std::vector 同様、各要素はメモリ上に連続して配置される
 *
-*
+*  template を使用した overload が正しく動作しない
+*  優先度の問題？
+*  
 *  template<typename InputIter>
 *  vector() について、
 *  イテレータ以外もこっちが優先的に使われる問題(未実装)
 *  initializer_list を使用した際に正しく処理されない
 *
 *  copyが禁止されているオブジェクトのムーブが正しく処理されない
+*
+*  コンストラクタで大きさを指定した時にlength_error か、
+*  capacity がオーバーフローのチェックを追加
+*
+*  assign() は後で実装
 */
 
 #pragma once
@@ -20,6 +27,8 @@
 
 #include <type_traits> // is_trivially_destructible, is_copy_constructible
 #include <utility>     // move, initializer_list
+
+#include <iostream>
 
 namespace LEON
 {
@@ -398,7 +407,154 @@ public:
         return mData[n];
     }
 
-    void pop_back(){}
+    // コンテナの変更
+    void push_back(const value_type& value)
+    {
+        if(mSize >= mCapacity)
+        {
+            size_type sz = (mSize * 2 > mSize) ? mSize * 2 : max_size();
+            reserve(sz);
+        }
+
+        traits::construct(mAllocator,
+                          mData + mSize,
+                          value);
+        mSize++;
+    }
+    void push_back(value_type&& value)
+    {
+        if(mSize >= mCapacity)
+        {
+            size_type sz = (mSize * 2 > mSize) ? mSize * 2 : max_size();
+            reserve(sz);
+        }
+
+        traits::construct(mAllocator,
+                          mData + mSize,
+                          ::std::move(value));
+        mSize++;
+    }
+    template<typename... Args>
+    void emplace_back(Args&&... args)
+    {
+        if(mSize >= mCapacity)
+        {
+            size_type sz = (mSize * 2 > mSize) ? mSize * 2 : max_size();
+            reserve(sz);
+        }
+
+        traits::construct(mAllocator,
+                          mData + mSize,
+                          args...);
+        mSize++;
+    }
+    void pop_back()
+    {
+        if(!empty())
+        {
+            if(!::std::is_trivially_destructible<value_type>::value)
+            {
+                traits::destroy(mAllocator,
+                                mData + mSize - 1);
+            }
+            mSize--;
+        }
+    }
+    iterator insert(const_iterator pos,
+                    const value_type& value)
+        {insert(pos, 1, value);}
+    iterator insert(const_iterator pos,
+                    value_type&& value)
+    {
+        if(mSize >= mCapacity)
+        {
+            size_type sz = (mSize * 2 > mSize) ? mSize * 2 : max_size();
+            reserve(sz);
+        }
+
+        for(size_type i = mSize; i > pos.mIndex; i--)
+        {
+            traits::construct(mAllocator,
+                              mData + i,
+                              ::std::move(*(mData + i - 1)));
+            if(!::std::is_trivially_destructible<value_type>::value)
+            {
+                traits::destroy(mAllocator,
+                                mData + i - 1);
+            }
+        }
+        
+        traits::construct(mAllocator,
+                          mData + pos.mIndex,
+                          ::std::move(value));
+        
+        mSize++;
+        return iterator(this, pos.mIndex);
+    }
+    iterator insert(const_iterator pos,
+                    size_type n,
+                    const value_type& value)
+    {
+        if(mSize + n - 1 >= mCapacity)
+        {
+            size_type sz = ((mSize + n - 1) * 2 > mSize) ? (mSize + n - 1) * 2 : max_size();
+            reserve(sz);
+        }
+
+        for(size_type i = mSize; i > pos.mIndex; i--)
+        {
+            traits::construct(mAllocator,
+                              mData + i + n - 1,
+                              *(mData + i - 1));
+            if(!::std::is_trivially_destructible<value_type>::value)
+            {
+                traits::destroy(mAllocator,
+                                mData + i - 1);
+            }
+        }
+        
+        for(size_type i = 0; i < n; i++)
+        {
+            traits::construct(mAllocator,
+                              mData + pos.mIndex + i,
+                              value);
+        }
+
+        mSize += n;
+        return iterator(this, pos.mIndex);
+    }
+    iterator insert(const_iterator pos,
+                    ::std::initializer_list<value_type> list)
+    {
+        size_type n = list.size();
+        if(mSize + n - 1 >= mCapacity)
+        {
+            size_type sz = ((mSize + n - 1) * 2 > mSize) ? (mSize + n - 1) * 2 : max_size();
+            reserve(sz);
+        }
+
+        for(size_type i = mSize; i > pos.mIndex; i--)
+        {
+            traits::construct(mAllocator,
+                              mData + i + n - 1,
+                              *(mData + i - 1));
+            if(!::std::is_trivially_destructible<value_type>::value)
+            {
+                traits::destroy(mAllocator,
+                                mData + i - 1);
+            }
+        }
+        
+        for(size_type i = 0; i < n; i++)
+        {
+            traits::construct(mAllocator,
+                              mData + pos.mIndex + i,
+                              *(list.begin() + i));
+        }
+
+        mSize += n;
+        return iterator(this, pos.mIndex);
+    }
 
 private:
     pointer   mData;           // 先頭アドレス
