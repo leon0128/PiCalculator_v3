@@ -16,14 +16,21 @@ public:
 
 int main(int argc, char** argv)
 {
-    using vector = LEON::vector<int>;
+    using vector = LEON::vector<Token>;
 
-    LEON::allocator<int> alloc;
+    LEON::allocator<Token> alloc;
 
+    vector src(1);
+    vector dst(src);
 
-    vector vec1;        // 1
-    vector vec2(alloc); // 2
-    LEON::vector<Token> vec3(1); // 3
+    // Token tok;
+    // LEON::vector<Token> vec(1, tok);
+
+    // vector vec1;        // 1
+    // vector vec2(alloc); // 2
+    // vector vec3(1);     // 3
+    // vector vec4(1, 1);  // 4
+    // vector vec5(vec.begin(), vec.end());
 
     return 0;
 }

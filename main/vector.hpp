@@ -2,6 +2,10 @@
 * 
 * ::std::vector 同様、各要素はメモリ上に連続して配置される
 *
+*
+*  template<typename InputIter>
+*  vector() について、
+*  イテレータ以外もこっちが優先的に使われる問題(未実装)
 */
 
 #pragma once
@@ -10,6 +14,9 @@
 #include "allocator_traits.hpp"
 #include "iterator.hpp"
 #include "reverse_iterator.hpp"
+
+#include <type_traits> // is_trivially_destructible
+#include <utility>     // move, initializer_list
 
 namespace LEON
 {
@@ -54,13 +61,13 @@ public:
         mSize(0),
         mCapacity(0),
         mAllocator(alloc){}
-    explicit vector(size_type n):
+    explicit vector(size_type n,
+                    const allocator_type& alloc = allocator_type()):
         mData(nullptr),
         mSize(n),
         mCapacity(n * 2),
-        mAllocator()
+        mAllocator(alloc)
     {
-        // デフォルトコンストラクタの呼び出し
         mData = traits::allocate(mAllocator,
                                  mCapacity);
         for(size_type i = 0; i < n; i++)
@@ -69,7 +76,172 @@ public:
                               mData + i);
         }
     }
+    vector(size_type n,
+           const_reference value,
+           const allocator_type& alloc = allocator_type()):
+        mData(nullptr),
+        mSize(n),
+        mCapacity(n * 2),
+        mAllocator(alloc)
+    {
+        mData = traits::allocate(mAllocator,
+                                 mCapacity);
+        for(size_type i = 0; i < n; i++)
+        {
+            traits::construct(mAllocator,
+                              mData + i,
+                              value);
+        }
+    }
+    vector(const vector& other):
+        vector(other,
+               traits::select_on_container_copy_construction(mAllocator)){}
+    vector(vector&& other):
+        vector(std::move(other),
+               traits::select_on_container_copy_construction(mAllocator)){}
+    vector(const vector& other,
+           const allocator_type& alloc):
+        mData(nullptr),
+        mSize(other.mSize),
+        mCapacity(other.mCapacity),
+        mAllocator(alloc)
+    {
+        mData = traits::allocate(mAllocator,
+                                 mCapacity);
+        for(size_type i = 0; i < other.mSize; i++)
+        {
+            traits::construct(mAllocator,
+                              mData + i,
+                              *(other.mData + i));
+        }
+    }
+    vector(vector&& other,
+           const allocator_type& alloc):
+        mData(other.mData),
+        mSize(other.mSize),
+        mCapacity(other.mCapacity),
+        mAllocator(alloc)
+    {
+        other.mData = nullptr;
+        other.mSize = 0;
+        other.mCapacity = 0;
+    }
+    vector(::std::initializer_list<value_type> list,
+           const allocator_type& alloc):
+        mData(nullptr),
+        mSize(list.size()),
+        mCapacity(list.size() * 2),
+        mAllocator(alloc)
+    {
+        mData = traits::allocate(mAllocator,
+                                 mCapacity);
+        for(size_type i = 0; i < mSize; i++)
+        {
+            traits::construct(mAllocator,
+                              mData + i,
+                              *(list.begin() + i));
+        }
+    }
+    // デストラクタ
+    ~vector()
+    {
+        if(!::std::is_trivially_destructible<value_type>::value)
+        {
+            for(size_type i = 0; i < mSize; i++)
+            {
+                traits::destroy(mAllocator,
+                                mData + i);
+            }
+        }
+        traits::deallocate(mAllocator,
+                           mData,
+                           mCapacity);
+    }
+    // 代入演算子
+    vector& operator=(const vector& other)
+    {
+        if(this == &other)
+            return *this;
+
+        if(!::std::is_trivially_destructible<value_type>::value)
+        {
+            for(size_type i = 0; i < mSize; i++)
+            {
+                traits::destroy(mAllocator,
+                                mData + i);
+            }
+        }
+        traits::deallocate(mAllocator,
+                           mData,
+                           mCapacity);
         
+        mSize = other.mSize;
+        mCapacity = other.mCapacity;
+        mAllocator = traits::select_on_container_copy_construction(other.mAllocator);
+        
+        mData = traits::allocate(mAllocator,
+                                 mCapacity);
+        for(size_type i = 0; i < mSize; i++)
+        {
+            traits::construct(mAllocator,
+                              mData + i,
+                              *(other.mData + i));
+        }
+
+        return *this;
+    }
+    vector& operator=(vector&& other)
+    {
+        if(this == &other)
+            return *this;
+        
+        if(!::std::is_trivially_destructible<value_type>::value)
+        {
+            for(size_type i = 0; i < mSize; i++)
+            {
+                traits::destroy(mAllocator,
+                                mData + i);
+            }
+        }
+        traits::deallocate(mAllocator,
+                           mData,
+                           mCapacity);
+        
+        mData = other.mData;
+        mSize = other.mSize;
+        mCapacity = other.mCapacity;
+        mAllocator = traits::select_on_container_copy_construction(other.mAllocator);
+    
+        return *this;
+    }
+    vector& operator=(::std::initializer_list<value_type> list)
+    {
+        if(!::std::is_trivially_destructible<value_type>::value)
+        {
+            for(size_type i = 0; i < mSize; i++)
+            {
+                traits::destroy(mAllocator,
+                                mData + i);
+            }
+        }
+        traits::deallocate(mAllocator,
+                           mData,
+                           mCapacity);
+        
+        mSize = list.size();
+        mCapacity = list.size() * 2;
+        mAllocator = traits::select_on_container_copy_construction(mAllocator);
+
+        mData = traits::allocate(mAllocator,
+                                 mCapacity);
+        for(size_type i = 0; i < mSize; i++)
+        {
+            traits::construct(mAllocator,
+                              mData + i,
+                              *(list.begin() + i));
+        }
+    }
+
     
 
 private:
