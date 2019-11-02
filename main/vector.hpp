@@ -604,6 +604,26 @@ public:
         mSize -= last - first;
         return iterator(this, last.mIndex);
     }
+    // swap
+    void swap(vector& other)
+    {
+        pointer   ptr = mData;
+        size_type sz  = mSize;
+        size_type cap = mCapacity;
+        allocator_type all 
+            = traits::select_on_container_copy_construction(mAllocator);
+        
+        mData = other.mData;
+        mSize = other.mSize;
+        mCapacity = other.mCapacity;
+        mAllocator
+            = traits::select_on_container_copy_construction(mAllocator);
+        
+        other.mData = ptr;
+        other.mSize = sz;
+        other.mCapacity  = cap;
+        other.mAllocator = all;
+    }
 
 private:
     pointer   mData;           // 先頭アドレス

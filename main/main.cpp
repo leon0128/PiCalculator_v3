@@ -19,14 +19,21 @@ public:
 int main(int argc, char** argv)
 {
     LEON::vector<Token> vec(3);
+    LEON::vector<Token> vec2(1);
     // vec.reserve(3);
+
+    std::cout << "vec : " << vec.data() << std::endl;
+    std::cout << "vec2: " << vec2.data() << std::endl;
 
     Token tok;
     std::cout << "===" << std::endl;
 
-    vec.erase(vec.begin());
+    vec.swap(vec2);
 
     std::cout << "===" << std::endl;
+
+    std::cout << "vec : " << vec.data() << std::endl;
+    std::cout << "vec2: " << vec2.data() << std::endl;
 
     // for(; iter != vec.end(); iter++)
     //     std::cout << "value: " << *iter << std::endl;
