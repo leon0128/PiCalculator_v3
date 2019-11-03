@@ -163,6 +163,86 @@ MP& MultiplePrecision::operator+=(const MP& inOther)
     return *this;
 }
 
+MP operator+(const MP& lhs, const MP& rhs)
+{
+    MP mp;
+
+    const auto& maxDecPart
+        = (lhs.mDecimalPart.size() >  rhs.mDecimalPart.size())
+            ? lhs.mDecimalPart : rhs.mDecimalPart;
+    const auto& minDecPart
+        = (lhs.mDecimalPart.size() <=  rhs.mDecimalPart.size())
+            ? lhs.mDecimalPart : rhs.mDecimalPart;
+    const auto& maxIntPart
+        = (lhs.mIntegerPart.size() >  rhs.mIntegerPart.size())
+            ? lhs.mDecimalPart : rhs.mDecimalPart;
+    const auto& minIntPart
+        = (lhs.mIntegerPart.size() <=  rhs.mIntegerPart.size())
+            ? lhs.mDecimalPart : rhs.mDecimalPart;
+
+    UINT_64 carry = 0;
+    
+    mp.mDecimalPart.resize(maxDecPart.size(), 0);
+    mp.mIntegerPart.resize(maxIntPart.size(), 0);
+    
+    // 小数部
+    for(UINT_64 i = maxDecPart.size();
+        i > minDecPart.size();
+        i--)
+    {
+        mp.mDecimalPart.at(i - 1)
+            = maxDecPart.at(i - 1);
+    }
+    for(UINT_64 i = minDecPart.size();
+        i > 0;
+        i--)
+    {
+        UINT_64 val
+            = static_cast<UINT_64>(maxDecPart.at(i - 1)) +
+              static_cast<UINT_64>(minDecPart.at(i - 1)) +
+              carry;
+        
+        mp.mDecimalPart.at(i - 1) 
+            = val % MP::CARRY;
+        carry 
+            = val / MP::CARRY;
+    }
+    // 整数部
+    for(UINT_64 i = 0;
+        i < minIntPart.size();
+        i++)
+    {
+        UINT_64 val
+            = static_cast<UINT_64>(maxIntPart.at(i)) +
+              static_cast<UINT_64>(minDecPart.at(i)) +
+              carry;
+        
+        mp.mIntegerPart.at(i)
+            = val % MP::CARRY;
+        carry
+            = val / MP::CARRY;
+    }
+    for(UINT_64 i = minIntPart.size();
+        i < maxIntPart.size();
+        i++)
+    {
+        UINT_64 val
+            = static_cast<UINT_64>(maxIntPart.at(i)) +
+              carry;
+        
+        mp.mIntegerPart.at(i)
+            = val % MP::CARRY;
+        carry
+            = val / MP::CARRY;
+    }
+
+    mp.mIntegerPart.push_back(carry);
+
+    mp.shrink();
+
+    return mp;
+}
+
 void MultiplePrecision::print(const MP& mp)
 {
     for(auto iter = mp.mIntegerPart.rbegin();
