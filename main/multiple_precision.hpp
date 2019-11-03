@@ -4,6 +4,7 @@
 
 #include <stdexcept> // error
 #include <iostream>
+#include <iomanip>
 
 class MultiplePrecision;
 using MP = MultiplePrecision;
@@ -24,6 +25,7 @@ public:
     MultiplePrecision();
     explicit MultiplePrecision(INT_64 value);
     explicit MultiplePrecision(int value);
+    explicit MultiplePrecision(long value);
     explicit MultiplePrecision(const char* value);
     MultiplePrecision(const MP& other);
     MultiplePrecision(MP&& other);
@@ -59,7 +61,7 @@ public:
     friend bool operator>=(const MP& lhs,
                            const MP& rhs);
 
-    static void print(const MP& mp) const;
+    static void print(const MP& mp);
 
 private:
     // 最上位が 0 の場合、その要素を削除

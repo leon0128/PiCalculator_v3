@@ -39,11 +39,16 @@ MultiplePrecision::MultiplePrecision(INT_64 value):
     }
     else if(low > 0)
     {
-        mIntegerPart.emplace_back(low);
+        mIntegerPart.push_back(low);
     }
 }
 
 MultiplePrecision::MultiplePrecision(int value):
+    MultiplePrecision(INT_64(value))
+{
+}
+
+MultiplePrecision::MultiplePrecision(long value):
     MultiplePrecision(INT_64(value))
 {
 }
@@ -109,55 +114,93 @@ MP& MultiplePrecision::operator=(MP&& other)
     return *this;
 }
 
-MP& MultiplePrecision::operator+=(const MP& other)
+MP& MultiplePrecision::operator+=(const MP& inOther)
 {
+    MP other(inOther);
+
     UINT_64 dSize 
         = (mDecimalPart.size() > other.mDecimalPart.size()) 
             ? mDecimalPart.size() : other.mDecimalPart.size();
     UINT_64 iSize
-        = (mIntegerPart.size() > other.mDecimalPart.size())
-            ? mIntegerPart.size() : other.mDecimalPart.size();
+        = (mIntegerPart.size() > other.mIntegerPart.size())
+            ? mIntegerPart.size() : other.mIntegerPart.size();
+
+    mDecimalPart.resize(dSize, 0);
+    other.mDecimalPart.resize(dSize, 0);
+    mIntegerPart.resize(iSize, 0);
+    other.mIntegerPart.resize(iSize, 0);
+
+    UINT_64 carry = 0;
     
-    UINT_32 carry = 0;
-    
-    for(UINT_64 i = dSize - 1; i >= 0; i--)
+    // 小数部
+    for(UINT_64 i = dSize; i > 0; i--)
     {
-        UINT_64 val = 0;
-        if(i < mDecimalPart.size())
-            val += mDecimalPart.at(i);
-        if(i < other.mDecimalPart.size());
-            val += mDecimalPart.at(i);
+        UINT_64 val
+            = static_cast<UINT_64>(mDecimalPart.at(i - 1))       +
+              static_cast<UINT_64>(other.mDecimalPart.at(i - 1)) +
+              carry;
         
-        
+
+        mDecimalPart.at(i - 1) = static_cast<UINT_32>(val);
+        carry = val / CARRY;
     }
+    // 整数部
+    for(UINT_64 i = 0; i < iSize; i++)
+    {
+        UINT_64 val
+            = static_cast<UINT_64>(mIntegerPart.at(i))       +
+              static_cast<UINT_64>(other.mIntegerPart.at(i)) +
+              carry;
+
+        mIntegerPart.at(i) = static_cast<UINT_32>(val % CARRY);
+        carry = val / CARRY;
+    }
+    mIntegerPart.push_back(carry);
+
+    shrink();
+    other.shrink();
+
+    return *this;
 }
 
-void MultiplePrecision::print(const MP& mp) const
+void MultiplePrecision::print(const MP& mp)
 {
     for(auto iter = mp.mIntegerPart.rbegin();
         iter != mp.mIntegerPart.rend();
         iter++)
-        std::cout << *iter << " ";
-    std::cout << std::endl << std::endl;;
+    {
+        std::cout << std::setw(8) 
+                  << *iter
+                  << " ";
+        std::cout.fill('0');
+    }
+    std::cout << std::endl;
+
     for(auto iter = mp.mDecimalPart.rbegin();
         iter != mp.mDecimalPart.rend();
         iter++)
-        std::cout << *iter << " ";
+    {
+        std::cout << std::setw(8) 
+                  << *iter
+                  << " ";
+        std::cout.fill('0');
+    }
     std::cout << std::endl;
 }
 
 void MultiplePrecision::shrink()
 {
     // 整数部
-    if(!mIntegerPart.empty())
+    if(!mIntegerPart.empty() &&
+        mIntegerPart.back() == 0)
     {
-        while(mIntegerPart.back() == 0)
-            mIntegerPart.pop_back();
+        mIntegerPart.pop_back();
     }
+
     // 小数部
-    if(!mDecimalPart.empty())
+    if(!mDecimalPart.empty() &&
+        mDecimalPart.back() == 0)
     {
-        while(mDecimalPart.back() == 0)
-            mDecimalPart.pop_back();
+        mDecimalPart.pop_back();
     }
 }
