@@ -5,9 +5,9 @@
 int main(int argc, char** argv)
 {
     MP(0);
-    MP(MP::INT_64_MAX);
+    MP mp(MP::INT_64_MAX);
 
-
+    MP::print(mp);
 
 
     return 0;
