@@ -59,9 +59,13 @@ public:
     friend bool operator>=(const MP& lhs,
                            const MP& rhs);
 
-    static void print(const MP& mp);
+    static void print(const MP& mp) const;
 
 private:
+    // 最上位が 0 の場合、その要素を削除
+    // 最下位が 0 の場合、その要素の削除
+    void shrink();
+
     LEON::vector<UINT_32> mIntegerPart; // 整数部(1 つの要素に 9桁, 10進)
     LEON::vector<UINT_32> mDecimalPart; // 小数部(1 つの要素に 9桁, 10進)
 
