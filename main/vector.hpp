@@ -300,7 +300,7 @@ public:
         }
     }
     void resize(size_type sz)
-        {resize(sz, T());}
+        {resize(sz, value_type());}
     // reserve
     void reserve(size_type sz)
     {
@@ -455,7 +455,7 @@ public:
     void push_back(const value_type& value)
     {
         if(mSize >= mCapacity)
-            reserve((mSize * 2 >= mSize) ? mSize * 2 : max_size());
+            reserve((mSize * 2 >= mSize) ? (mSize + 1) * 2 : max_size());
 
         traits::construct(mAllocator,
                           mData + mSize,
@@ -465,7 +465,7 @@ public:
     void push_back(value_type&& value)
     {
         if(mSize >= mCapacity)
-            reserve((mSize * 2 >= mSize) ? mSize * 2 : max_size());
+            reserve((mSize * 2 >= mSize) ? (mSize + 1) * 2 : max_size());
 
         traits::construct(mAllocator,
                           mData + mSize,
@@ -477,11 +477,11 @@ public:
     void emplace_back(Args&&... args)
     {
         if(mSize >= mCapacity)
-            reserve((mSize * 2 >= mSize) ? mSize * 2 : max_size());
+            reserve((mSize * 2 >= mSize) ? (mSize + 1) * 2 : max_size());
 
         traits::construct(mAllocator,
                           mData + mSize,
-                          args...);
+                          ::std::forward<Args>(args)...);
         mSize++;
     }
     // pop_back
@@ -505,7 +505,7 @@ public:
                     value_type&& value)
     {
         if(mSize >= mCapacity)
-            reserve((mSize * 2 >= mSize) ? mSize * 2 : max_size());
+            reserve((mSize * 2 >= mSize) ? (mSize + 1) * 2 : max_size());
 
         for(size_type i = mSize; i > pos.mIndex; i--)
         {
@@ -531,7 +531,7 @@ public:
                     const value_type& value)
     {
         if(mSize + n - 1 >= mCapacity)
-            reserve(((mSize + n - 1) * 2 >= mSize) ? (mSize + n - 1) * 2 : max_size());
+            reserve(((mSize + n - 1) * 2 >= mSize) ? (mSize + n) * 2 : max_size());
 
         for(size_type i = mSize; i > pos.mIndex; i--)
         {
@@ -560,7 +560,7 @@ public:
     {
         size_type n = list.size();
         if(mSize + n - 1 >= mCapacity)
-            reserve(((mSize + n - 1) * 2 >= mSize) ? (mSize + n - 1) * 2 : max_size());
+            reserve(((mSize + n - 1) * 2 >= mSize) ? (mSize + n) * 2 : max_size());
 
 
         for(size_type i = mSize; i > pos.mIndex; i--)
@@ -591,7 +591,7 @@ public:
                      Args&&... args)
     {
         if(mSize >= mCapacity)
-            reserve((mSize * 2 >= mSize) ? mSize * 2 : max_size());
+            reserve((mSize * 2 >= mSize) ? (mSize + 1) * 2 : max_size());
 
         for(size_type i = mSize; i > pos.mIndex; i--)
         {
