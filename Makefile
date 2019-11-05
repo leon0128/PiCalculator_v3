@@ -1,5 +1,5 @@
 CXX      = g++
-CXXFLAGS = -std=c++11 $(DEBUG)
+CXXFLAGS = -std=c++11 $(DEBUG) -lgmp
 DEBUG    = -g3 -Wall
 OBJS     = $(patsubst %.cpp, %.o, $(wildcard */*.cpp))
 PROGRAM  = Calculator

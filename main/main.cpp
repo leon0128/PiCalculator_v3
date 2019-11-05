@@ -1,16 +1,11 @@
 #include "multiple_precision.hpp"
 
-#include <vector>
-
 int main(int argc, char** argv)
 {
-    MP a;
+    MP a(-1000);
     MP b(100);
-    a += b;
 
-    MP::print(a += b);
-
-
+    MP::print();
 
     return 0;
 }

@@ -720,6 +720,9 @@ bool operator<(const vector<_T, _A>& lhs,
     if(lhs.size() < rhs.size())
         return true;
     
+    if(lhs.empty())
+        return false;
+
     if(lhs.back() < rhs.back())
         return true;
     else
@@ -732,6 +735,9 @@ bool operator<=(const vector<_T, _A>& lhs,
     if(lhs.size() <= rhs.size())
         return true;
     
+    if(lhs.empty())
+        return true;
+
     if(lhs.back() <= rhs.back())
         return true;
     else
@@ -740,11 +746,33 @@ bool operator<=(const vector<_T, _A>& lhs,
 template<typename _T, typename _A>
 bool operator>(const vector<_T, _A>& lhs,
                const vector<_T, _A>& rhs)
-    {return !(lhs <= rhs);}
+{
+    if(lhs.size() > rhs.size())
+        return true;
+    
+    if(lhs.empty())
+        return false;
+
+    if(lhs.back() > rhs.back())
+        return true;
+    else
+        return false;
+}
 template<typename _T, typename _A>
 bool operator>=(const vector<_T, _A>& lhs,
                 const vector<_T, _A>& rhs)
-    {return !(lhs < rhs);}
+{
+    if(lhs.size() >= rhs.size())
+        return true;
+    
+    if(lhs.empty())
+        return true;
+
+    if(lhs.back() >= rhs.back())
+        return true;
+    else
+        return false;
+}
 // swap
 template<typename _T, typename _A>
 void swap(vector<_T, _A>& lhs,

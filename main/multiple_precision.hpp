@@ -64,6 +64,13 @@ public:
     static void print(const MP& mp);
 
 private:
+    // 第一引数に第二引数と第三引数を足した値を格納
+    static void addition(MP& dst,
+                         const MP& lhs, const MP& rhs);
+    // 第一引数に第二引数から第三引数を引いた値を格納
+    static void subtraction(MP& dst,
+                            const MP& lhs, const MP& rhs);
+
     // 最上位が 0 の場合、その要素を削除
     // 最下位が 0 の場合、その要素の削除
     void shrink();

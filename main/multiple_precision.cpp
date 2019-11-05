@@ -107,8 +107,8 @@ MP& MultiplePrecision::operator=(const MP& other)
 
 MP& MultiplePrecision::operator=(MP&& other)
 {
-    mIntegerPart = std::move(other.mIntegerPart);
-    mDecimalPart = std::move(other.mDecimalPart);
+    mIntegerPart = other.mIntegerPart;
+    mDecimalPart = other.mDecimalPart;
     mIsPositive  = other.mIsPositive;
 
     return *this;
@@ -116,169 +116,67 @@ MP& MultiplePrecision::operator=(MP&& other)
 
 MP& MultiplePrecision::operator+=(const MP& other)
 {
-    const auto& maxDecPart
-        = (mDecimalPart.size() >  other.mDecimalPart.size())
-            ? mDecimalPart : other.mDecimalPart;
-    const auto& minDecPart
-        = (mDecimalPart.size() <=  other.mDecimalPart.size())
-            ? mDecimalPart : other.mDecimalPart;
-    const auto& maxIntPart
-        = (mIntegerPart.size() >  other.mIntegerPart.size())
-            ? mIntegerPart : other.mIntegerPart;
-    const auto& minIntPart
-        = (mIntegerPart.size() <=  other.mIntegerPart.size())
-            ? mIntegerPart : other.mIntegerPart;
+    if(mIsPositive == other.mIsPositive)
+        MP::addition(*this, *this, other);
+    else if(!mIsPositive && other.mIsPositive)
+        MP::subtraction(*this, other, *this);
+    else if(mIsPositive && !other.mIsPositive)
+        MP::subtraction(*this, *this, other);
 
-    UINT_64 carry = 0;
+    return *this;
+}
+
+MP& MultiplePrecision::operator-=(const MP& other)
+{
+    if(mIsPositive && other.mIsPositive)
+        MP::subtraction(*this, *this, other);
+    else if(mIsPositive != other.mIsPositive)
+        MP::addition(*this, *this, other);
+    else if(!mIsPositive && !other.mIsPositive)
+        MP::subtraction(*this, other, *this);
     
-    mDecimalPart.resize(maxDecPart.size(), 0);
-    mIntegerPart.resize(maxIntPart.size(), 0);
-
-    // 小数部
-    for(UINT_64 i = maxDecPart.size();
-        i > minDecPart.size();
-        i--)
-    {
-        mDecimalPart.at(i - 1)
-            = maxDecPart.at(i - 1);
-    }
-    for(UINT_64 i = minDecPart.size();
-        i > 0;
-        i--)
-    {
-        UINT_64 val
-            = static_cast<UINT_64>(maxDecPart.at(i - 1)) +
-              static_cast<UINT_64>(minDecPart.at(i - 1)) +
-              carry;
-        
-        mDecimalPart.at(i - 1) 
-            = val % CARRY;
-        carry 
-            = val / CARRY;
-    }
-    // 整数部
-    for(UINT_64 i = 0;
-        i < minIntPart.size();
-        i++)
-    {
-        UINT_64 val
-            = static_cast<UINT_64>(maxIntPart.at(i)) +
-              static_cast<UINT_64>(minIntPart.at(i)) +
-              carry;
-        
-        mIntegerPart.at(i)
-            = val % CARRY;
-        carry
-            = val / CARRY;
-    }
-    for(UINT_64 i = minIntPart.size();
-        i < maxIntPart.size();
-        i++)
-    {
-        UINT_64 val
-            = static_cast<UINT_64>(maxIntPart.at(i)) +
-              carry;
-        
-        mIntegerPart.at(i)
-            = val % CARRY;
-        carry
-            = val / CARRY;
-    }
-
-    mIntegerPart.push_back(carry);
-
-    shrink();
-
     return *this;
 }
 
 MP operator+(const MP& lhs, const MP& rhs)
 {
     MP mp;
-
-    const auto& maxDecPart
-        = (lhs.mDecimalPart.size() >  rhs.mDecimalPart.size())
-            ? lhs.mDecimalPart : rhs.mDecimalPart;
-    const auto& minDecPart
-        = (lhs.mDecimalPart.size() <=  rhs.mDecimalPart.size())
-            ? lhs.mDecimalPart : rhs.mDecimalPart;
-    const auto& maxIntPart
-        = (lhs.mIntegerPart.size() >  rhs.mIntegerPart.size())
-            ? lhs.mIntegerPart : rhs.mIntegerPart;
-    const auto& minIntPart
-        = (lhs.mIntegerPart.size() <=  rhs.mIntegerPart.size())
-            ? lhs.mIntegerPart : rhs.mIntegerPart;
-
-    UINT_64 carry = 0;
     
-    mp.mDecimalPart.resize(maxDecPart.size(), 0);
-    mp.mIntegerPart.resize(maxIntPart.size(), 0);
-    
-    // 小数部
-    for(UINT_64 i = maxDecPart.size();
-        i > minDecPart.size();
-        i--)
-    {
-        mp.mDecimalPart.at(i - 1)
-            = maxDecPart.at(i - 1);
-    }
-    for(UINT_64 i = minDecPart.size();
-        i > 0;
-        i--)
-    {
-        UINT_64 val
-            = static_cast<UINT_64>(maxDecPart.at(i - 1)) +
-              static_cast<UINT_64>(minDecPart.at(i - 1)) +
-              carry;
-        
-        mp.mDecimalPart.at(i - 1) 
-            = val % MP::CARRY;
-        carry 
-            = val / MP::CARRY;
-    }
-    // 整数部
-    for(UINT_64 i = 0;
-        i < minIntPart.size();
-        i++)
-    {
-        UINT_64 val
-            = static_cast<UINT_64>(maxIntPart.at(i)) +
-              static_cast<UINT_64>(minDecPart.at(i)) +
-              carry;
-        
-        mp.mIntegerPart.at(i)
-            = val % MP::CARRY;
-        carry
-            = val / MP::CARRY;
-    }
-    for(UINT_64 i = minIntPart.size();
-        i < maxIntPart.size();
-        i++)
-    {
-        UINT_64 val
-            = static_cast<UINT_64>(maxIntPart.at(i)) +
-              carry;
-        
-        mp.mIntegerPart.at(i)
-            = val % MP::CARRY;
-        carry
-            = val / MP::CARRY;
-    }
+    if(lhs.mIsPositive == rhs.mIsPositive)
+        MP::addition(mp, lhs, rhs);
+    else if(!lhs.mIsPositive && rhs.mIsPositive)
+        MP::subtraction(mp, rhs, lhs);
+    else if(lhs.mIsPositive && rhs.mIsPositive)
+        MP::subtraction(mp, lhs, rhs);
 
-    mp.mIntegerPart.push_back(carry);
+    return mp;
+}
 
-    mp.shrink();
+MP operator-(const MP& lhs, const MP& rhs)
+{
+    MP mp;
+
+    if(lhs.mIsPositive && rhs.mIsPositive)
+        MP::subtraction(mp, lhs, rhs);
+    else if(lhs.mIsPositive != rhs.mIsPositive)
+        MP::addition(mp, lhs, rhs);
+    else if(!lhs.mIsPositive && rhs.mIsPositive)
+        MP::subtraction(mp, rhs, lhs);
 
     return mp;
 }
 
 void MultiplePrecision::print(const MP& mp)
 {
+    std::cout << "sign: "
+              << ((mp.mIsPositive) ? "+" : "-")
+              << std::endl;
+
     for(auto iter = mp.mIntegerPart.rbegin();
         iter != mp.mIntegerPart.rend();
         iter++)
     {
-        std::cout << std::setw(8) 
+        std::cout << std::setw(9) 
                   << *iter
                   << " ";
         std::cout.fill('0');
@@ -289,12 +187,227 @@ void MultiplePrecision::print(const MP& mp)
         iter != mp.mDecimalPart.rend();
         iter++)
     {
-        std::cout << std::setw(8) 
+        std::cout << std::setw(9) 
                   << *iter
                   << " ";
         std::cout.fill('0');
     }
     std::cout << std::endl;
+}
+
+void MultiplePrecision::addition(MP& dst,
+                                 const MP& lhs, const MP& rhs)
+{
+    const auto& decMaxPart
+        = (lhs.mDecimalPart.size() > rhs.mDecimalPart.size())
+            ? lhs.mDecimalPart : rhs.mDecimalPart;
+    const auto& decMinPart
+        = (lhs.mDecimalPart.size() <= rhs.mDecimalPart.size())
+            ? lhs.mDecimalPart : rhs.mDecimalPart;
+    const auto& intMaxPart
+        = (lhs.mIntegerPart.size() > rhs.mIntegerPart.size())
+            ? lhs.mIntegerPart : rhs.mIntegerPart;
+    const auto& intMinPart
+        = (lhs.mIntegerPart.size() <= rhs.mIntegerPart.size())
+            ? lhs.mIntegerPart : rhs.mIntegerPart;
+
+    dst.mDecimalPart.resize(decMaxPart.size(), 0);
+    dst.mIntegerPart.resize(intMaxPart.size(), 0);
+
+    UINT_64 carry = 0;
+
+    // 小数部
+    for(UINT_64 i = decMaxPart.size();
+        i > decMinPart.size();
+        i--)
+    {
+        dst.mDecimalPart.at(i - 1)
+            = decMaxPart.at(i - 1);
+    }
+    for(UINT_64 i = decMinPart.size();
+        i > 0;
+        i--)
+    {
+        UINT_64 val
+            = static_cast<UINT_64>(decMinPart.at(i - 1)) +
+              static_cast<UINT_64>(decMaxPart.at(i - 1)) +
+              carry;
+        
+        dst.mDecimalPart.at(i - 1)
+            = static_cast<UINT_32>(val % MP::CARRY);
+        carry
+            = (val >= MP::CARRY)
+                ? 1 : 0;
+    }
+    // 整数部
+    for(UINT_64 i = 0;
+        i < intMinPart.size();
+        i++)
+    {
+        UINT_64 val
+            = static_cast<UINT_64>(intMinPart.at(i)) +
+              static_cast<UINT_64>(intMaxPart.at(i)) +
+              carry;
+        
+        dst.mIntegerPart.at(i)
+            = static_cast<UINT_32>(val % MP::CARRY);
+        carry
+            = (val >= MP::CARRY)
+                ? 1 : 0;
+    }
+    for(UINT_64 i = intMinPart.size();
+        i < intMaxPart.size();
+        i++)
+    {
+        UINT_64 val
+            = static_cast<UINT_64>(intMaxPart.at(i)) +
+              carry;
+        
+        dst.mIntegerPart.at(i)
+            = static_cast<UINT_32>(val % MP::CARRY);
+        carry
+            = (val >= MP::CARRY)
+                ? 1 : 0;
+    }
+
+    dst.mIsPositive = lhs.mIsPositive;
+    
+    dst.mIntegerPart.push_back(static_cast<UINT_32>(carry));
+    dst.shrink();
+}
+
+void MultiplePrecision::subtraction(MP& dst,
+                                    const MP& lhs, const MP& rhs)
+{
+    UINT_64 dSize
+        = (lhs.mDecimalPart.size() > rhs.mDecimalPart.size())
+            ? lhs.mDecimalPart.size() : rhs.mDecimalPart.size();
+    UINT_64 iSize
+        = (lhs.mIntegerPart.size() > rhs.mIntegerPart.size())
+            ? lhs.mIntegerPart.size() : rhs.mIntegerPart.size();
+    
+    dst.mDecimalPart.resize(dSize, 0);
+    dst.mIntegerPart.resize(iSize, 0);
+
+    UINT_64 carry = 0;
+
+    // 小数部
+    if(lhs.mDecimalPart.size() > rhs.mDecimalPart.size())
+    {
+        for(UINT_64 i = lhs.mDecimalPart.size();
+            i > rhs.mDecimalPart.size();
+            i--)
+        {
+            dst.mDecimalPart.at(i - 1)
+                = lhs.mDecimalPart.at(i - 1);
+        }
+    }
+    else if(lhs.mDecimalPart.size() < rhs.mDecimalPart.size())
+    {
+        for(UINT_64 i = rhs.mDecimalPart.size();
+            i > lhs.mDecimalPart.size();
+            i--)
+        {
+            UINT_64 val
+                = MP::CARRY -
+                  carry     -
+                  static_cast<UINT_64>(rhs.mDecimalPart.at(i - 1));
+            
+            dst.mDecimalPart.at(i - 1)
+                = static_cast<UINT_32>(val % MP::CARRY);
+            carry
+                = (val >= MP::CARRY)
+                    ? 0 : 1;
+        }
+    }
+    dSize
+        = (lhs.mDecimalPart.size() < rhs.mDecimalPart.size())
+            ? lhs.mDecimalPart.size() : rhs.mDecimalPart.size();
+    for(UINT_64 i = dSize;
+        i > 0;
+        i--)
+    {
+        UINT_64 val
+            = MP::CARRY +
+              static_cast<UINT_64>(lhs.mDecimalPart.at(i - 1)) -
+              static_cast<UINT_64>(rhs.mDecimalPart.at(i - 1)) -
+              carry;
+        
+        dst.mDecimalPart.at(i - 1)
+            = static_cast<UINT_32>(val % MP::CARRY);
+        carry
+            = (val >= MP::CARRY)
+                ? 0 : 1;
+    }
+    // 整数部
+    iSize
+        = (lhs.mIntegerPart.size() < rhs.mIntegerPart.size())
+            ? lhs.mIntegerPart.size() : rhs.mIntegerPart.size();
+    for(UINT_64 i = 0;
+        i < iSize;
+        i++)
+    {
+        UINT_64 val
+            = MP::CARRY +
+              static_cast<UINT_64>(lhs.mIntegerPart.at(i)) -
+              static_cast<UINT_64>(rhs.mIntegerPart.at(i)) -
+              carry;
+        
+        dst.mIntegerPart.at(i)
+            = static_cast<UINT_32>(val % MP::CARRY);
+        carry
+            = (val >= MP::CARRY)
+                ? 0 : 1;
+    }
+    if(lhs.mIntegerPart.size() > rhs.mIntegerPart.size())
+    {
+        for(UINT_64 i = rhs.mIntegerPart.size();
+            i < lhs.mIntegerPart.size();
+            i++)
+        {
+            UINT_64 val
+                = MP::CARRY +
+                  static_cast<UINT_64>(lhs.mIntegerPart.at(i)) -
+                  carry;
+            
+            dst.mIntegerPart.at(i)
+                = static_cast<UINT_32>(val % MP::CARRY);
+            carry
+                = (val >= MP::CARRY)
+                    ? 0 : 1;
+        }
+    }
+    else if(lhs.mIntegerPart.size() < rhs.mIntegerPart.size())
+    {
+        for(UINT_64 i = lhs.mIntegerPart.size();
+            i < rhs.mIntegerPart.size();
+            i++)
+        {
+            UINT_64 val
+                = MP::CARRY -
+                  static_cast<UINT_64>(rhs.mIntegerPart.at(i)) -
+                  carry;
+            
+            dst.mIntegerPart.at(i)
+                = static_cast<UINT_32>(val % MP::CARRY);
+            carry
+                = (val >= MP::CARRY)
+                    ? 0 : 1;
+        }
+    }
+
+    // 正負反転
+    if(carry == 1)
+    {
+        for(auto& e : dst.mDecimalPart)
+            e = MP::CARRY - e;
+        for(auto& e : dst.mIntegerPart)
+            e = MP::CARRY - e;
+
+        dst.mIsPositive = !dst.mIsPositive;
+    }
+
+    dst.shrink();
 }
 
 void MultiplePrecision::shrink()
