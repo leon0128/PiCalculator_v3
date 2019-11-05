@@ -220,7 +220,7 @@ MP operator-(const MP& lhs, const MP& rhs)
         MP::subtraction(mp, lhs, rhs);
     else if(lhs.mIsPositive != rhs.mIsPositive)
         MP::addition(mp, lhs, rhs);
-    else if(!lhs.mIsPositive && rhs.mIsPositive)
+    else if(!lhs.mIsPositive && !rhs.mIsPositive)
         MP::subtraction(mp, rhs, lhs);
 
     return mp;
@@ -607,16 +607,20 @@ void MultiplePrecision::multiplication(MP& dst,
 void MultiplePrecision::shrink()
 {
     // 整数部
-    if(!mIntegerPart.empty() &&
-        mIntegerPart.back() == 0)
+    while(!mIntegerPart.empty())
     {
-        mIntegerPart.pop_back();
+        if(mIntegerPart.back() == 0)
+            mIntegerPart.pop_back();
+        else
+            break;
     }
 
     // 小数部
-    if(!mDecimalPart.empty() &&
-        mDecimalPart.back() == 0)
+    while(!mDecimalPart.empty())
     {
-        mDecimalPart.pop_back();
+        if(mDecimalPart.back() == 0)
+            mDecimalPart.pop_back();
+        else
+            break;
     }
 }
