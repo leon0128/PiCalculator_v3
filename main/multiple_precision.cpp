@@ -410,6 +410,123 @@ void MultiplePrecision::subtraction(MP& dst,
     dst.shrink();
 }
 
+void MultiplePrecision::multiplication(MP& dst,
+                                       const MP& lhs, const MP& rhs)
+{
+    MP result;
+
+    result.mIsPositive
+        = (lhs.mIsPositive == rhs.mIsPositive)
+            ? true : false;
+    
+    UINT_64 dSize
+        = lhs.mDecimalPart.size() + rhs.mDecimalPart.size();
+    UINT_64 iSize
+        = lhs.mIntegerPart.size() + rhs.mIntegerPart.size();
+
+    result.mIntegerPart.resize(dSize + iSize, 0);
+
+    UINT_64 carry = 0;
+
+    // 小数部
+    for(UINT_64 i = rhs.mDecimalPart.size();
+        i > 0;
+        i--)
+    {
+        MP temp;
+        temp.mIntegerPart.resize(i, 0);
+
+        carry = 0;
+
+        for(UINT_64 j = lhs.mDecimalPart.size();
+            j > 0;
+            j--)
+        {
+            UINT_64 val
+                = static_cast<UINT_64>(lhs.mDecimalPart.at(j - 1)) *
+                  static_cast<UINT_64>(rhs.mDecimalPart.at(i - 1)) +
+                  carry;
+            
+            UINT_32 v
+                = static_cast<UINT_32>(val % MP::CARRY);
+            carry
+                = val / MP::CARRY;
+
+            temp.mIntegerPart.push_back(v);
+        }
+        for(UINT_64 j = 0;
+            j < lhs.mIntegerPart.size();
+            j++)
+        {
+            UINT_64 val
+                = static_cast<UINT_64>(lhs.mIntegerPart.at(j))     *
+                  static_cast<UINT_64>(rhs.mDecimalPart.at(i - 1)) +
+                  carry;
+            
+            UINT_32 v
+                = static_cast<UINT_32>(val % MP::CARRY);
+            carry
+                = val / MP::CARRY;
+
+            temp.mIntegerPart.push_back(v);
+        }
+
+        temp.mIntegerPart.push_back(static_cast<UINT_32>(carry));
+
+        addition(result, temp, result);
+    }
+    // 整数部
+    for(UINT_64 i = 0;
+        i < rhs.mIntegerPart.size();
+        i++)
+    {
+        MP temp;
+        temp.mIntegerPart.resize(rhs.mDecimalPart.size() - 1 + i, 0);
+
+        carry = 0;
+
+        for(UINT_64 j = lhs.mDecimalPart.size();
+            j > 0;
+            j--)
+        {
+            UINT_64 val
+                = static_cast<UINT_64>(lhs.mDecimalPart.at(j - 1)) *
+                  static_cast<UINT_64>(rhs.mIntegerPart.at(i))     +
+                  carry;
+            
+            UINT_32 v
+                = static_cast<UINT_32>(val % MP::CARRY);
+            carry
+                = val / MP::CARRY;
+
+            temp.mIntegerPart.push_back(v);
+        }
+        for(UINT_64 j = 0;
+            j < lhs.mIntegerPart.size();
+            j++)
+        {
+            UINT_64 val
+                = static_cast<UINT_64>(lhs.mIntegerPart.at(j)) *
+                  static_cast<UINT_64>(rhs.mIntegerPart.at(i)) *
+                  carry;
+            
+            UINT_32 v
+                = static_cast<UINT_32>(val % MP::CARRY);
+            carry
+                = val / MP::CARRY;
+            
+            temp.mIntegerPart.push_back(v);
+        }
+
+        temp.mIntegerPart.push_back(static_cast<UINT_32>(carry));
+
+        addition(result, temp, result);
+    }
+
+    result.shrink();
+    dst = result;
+}
+
 void MultiplePrecision::shrink()
 {
     // 整数部
