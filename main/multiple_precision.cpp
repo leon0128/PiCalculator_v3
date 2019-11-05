@@ -53,31 +53,84 @@ MultiplePrecision::MultiplePrecision(long value):
 {
 }
 
-// MultiplePrecision::MultiplePrecision(const char* value):
-//     mIntegerPart(),
-//     mDecimalPart(),
-//     mIsPositive(true)
-// {
-//     LEON::vector<char> elements;
-//     while(*value)
-//     {
-//         if(*value >= '0' && *value <= '9')
-//             elements.emplace_back(*value);
-//         value++;
-//     }
+MultiplePrecision::MultiplePrecision(const char* value):
+    mIntegerPart(),
+    mDecimalPart(),
+    mIsPositive(true)
+{
+    if(*value == '+')
+    {
+        mIsPositive = true;
+        value++;
+    }
+    else if(*value == '-')
+    {
+        mIsPositive = false;
+        value++;
+    }
 
-//     UINT_32 val = 0;
-//     for(UINT_64 rate = 1; rate < CARRY; rate *= 10)
-//     {
-//         if(elements.empty())
-//             break;
+    LEON::vector<char> integer;
+    LEON::vector<char> decimal;
+    while(*value)
+    {
+        if(*value >= '0' && *value <= '9')
+            integer.push_back(*value);
+        else if(*value == '.')
+        {
+            value++;
+            break;
+        }
+        value++;
+    }
+    while(*value)
+    {
+        if(*value >= '0' && *value <= '9')
+            decimal.push_back(*value);
+        
+        value++;
+    }
 
-//         val += rate * (elements.back() - '0');
-//         elements.pop_back();
-//     }
+    UINT_32 rate = 1;
+    UINT_32 val  = 0;
+    for(auto iter = integer.rbegin();
+        iter != integer.rend();
+        iter++)
+    {
+        val   = val + (*iter - '0') * rate;
+        rate *= 10;
 
-//     std::cout << "value: " << val << std::endl;
-// }
+        if(rate == MP::CARRY)
+        {
+            mIntegerPart.push_back(val);
+
+            rate = 1;
+            val  = 0;
+        }
+    }
+    mIntegerPart.push_back(val);
+    
+    rate = MP::CARRY;
+    val  = 0;
+    
+    for(auto iter = decimal.begin();
+        iter != decimal.end();
+        iter++)
+    {
+        rate /= 10;
+        val   = val + (*iter - '0') * rate;
+        
+        if(rate == 1)
+        {
+            mDecimalPart.push_back(val);
+            
+            rate = MP::CARRY;
+            val  = 0;
+        }
+    }
+    mDecimalPart.push_back(val);
+
+    shrink();
+}
 
 MultiplePrecision::MultiplePrecision(const MP& other)
 {
@@ -138,6 +191,13 @@ MP& MultiplePrecision::operator-=(const MP& other)
     return *this;
 }
 
+MP& MultiplePrecision::operator*=(const MP& other)
+{
+    multiplication(*this, *this, other);
+    
+    return *this;
+}
+
 MP operator+(const MP& lhs, const MP& rhs)
 {
     MP mp;
@@ -166,6 +226,15 @@ MP operator-(const MP& lhs, const MP& rhs)
     return mp;
 }
 
+MP operator*(const MP& lhs, const MP& rhs)
+{
+    MP mp;
+
+    MP::multiplication(mp, lhs, rhs);
+
+    return mp;
+}
+
 void MultiplePrecision::print(const MP& mp)
 {
     std::cout << "sign: "
@@ -183,8 +252,8 @@ void MultiplePrecision::print(const MP& mp)
     }
     std::cout << std::endl;
 
-    for(auto iter = mp.mDecimalPart.rbegin();
-        iter != mp.mDecimalPart.rend();
+    for(auto iter = mp.mDecimalPart.begin();
+        iter != mp.mDecimalPart.end();
         iter++)
     {
         std::cout << std::setw(9) 
@@ -414,10 +483,6 @@ void MultiplePrecision::multiplication(MP& dst,
                                        const MP& lhs, const MP& rhs)
 {
     MP result;
-
-    result.mIsPositive
-        = (lhs.mIsPositive == rhs.mIsPositive)
-            ? true : false;
     
     UINT_64 dSize
         = lhs.mDecimalPart.size() + rhs.mDecimalPart.size();
@@ -434,7 +499,7 @@ void MultiplePrecision::multiplication(MP& dst,
         i--)
     {
         MP temp;
-        temp.mIntegerPart.resize(i, 0);
+        temp.mIntegerPart.resize(rhs.mDecimalPart.size() - i, 0);
 
         carry = 0;
 
@@ -481,7 +546,7 @@ void MultiplePrecision::multiplication(MP& dst,
         i++)
     {
         MP temp;
-        temp.mIntegerPart.resize(rhs.mDecimalPart.size() - 1 + i, 0);
+        temp.mIntegerPart.resize(rhs.mDecimalPart.size() + i, 0);
 
         carry = 0;
 
@@ -507,7 +572,7 @@ void MultiplePrecision::multiplication(MP& dst,
         {
             UINT_64 val
                 = static_cast<UINT_64>(lhs.mIntegerPart.at(j)) *
-                  static_cast<UINT_64>(rhs.mIntegerPart.at(i)) *
+                  static_cast<UINT_64>(rhs.mIntegerPart.at(i)) +
                   carry;
             
             UINT_32 v
@@ -522,6 +587,18 @@ void MultiplePrecision::multiplication(MP& dst,
 
         addition(result, temp, result);
     }
+
+    for(UINT_64 i = dSize; i > 0; i--)
+    {
+        result.mDecimalPart
+            .push_back(result.mIntegerPart.at(i - 1));
+    }
+    result.mIntegerPart.erase(result.mIntegerPart.begin(),
+                              result.mIntegerPart.begin() + dSize);
+
+    result.mIsPositive
+        = (lhs.mIsPositive == rhs.mIsPositive)
+            ? true : false;
 
     result.shrink();
     dst = result;
