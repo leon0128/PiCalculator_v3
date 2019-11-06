@@ -274,6 +274,43 @@ bool operator==(const MP& lhs, const MP& rhs)
     return true;
 }
 
+bool operator!=(const MP& lhs, const MP& rhs)
+{
+    return !(lhs == rhs);
+}
+
+bool operator<(const MP& lhs, const MP& rhs)
+{
+    if(lhs.mIntegerPart.size() < rhs.mIntegerPart.size())
+        return true;
+    else if(lhs.mIntegerPart.size() > rhs.mIntegerPart.size())
+        return false;
+    
+    for(UINT_64 i = lhs.mIntegerPart.size(); i > 0; i--)
+    {
+        if(lhs.mIntegerPart.at(i) < rhs.mIntegerPart.at(i))
+            return true;
+        else if(lhs.mIntegerPart.at(i) > rhs.mIntegerPart.at(i))
+            return false;
+    }
+    
+    UINT_64 dSize
+        = (lhs.mDecimalPart.size() < rhs.mDecimalPart.size())
+            ? lhs.mDecimalPart.size() : rhs.mDecimalPart.size();
+    for(UINT_64 i = 0; i < dSize; i++)
+    {
+        if(lhs.mDecimalPart.at(i) < rhs.mDecimalPart.at(i))
+            return true;
+        else if(lhs.mDecimalPart.at(i) > rhs.mDecimalPart.at(i))
+            return false;
+    }
+    
+    if(lhs.mDecimalPart.size() < rhs.mDecimalPart.size())
+        return true;
+    else
+        return false;
+}
+
 void MultiplePrecision::print(const MP& mp)
 {
     std::cout << "sign: "
