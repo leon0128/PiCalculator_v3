@@ -1,8 +1,8 @@
 #include "multiple_precision.hpp"
 
 const UINT_64 MP::CARRY      = 1000000000;
-      UINT_64 MP::MAX_DEPTH  = 10000;
-const INT_64  MP::INT_64_MAX = 999999999999999999;
+      UINT_64 MP::MAX_DEPTH  = 100;
+const  INT_64 MP::INT_64_MAX = 999999999999999999;
 
 static_assert(sizeof(UINT_32) == 4,
               "invalid size of \"unsigned int\"");
@@ -198,6 +198,13 @@ MP& MultiplePrecision::operator*=(const MP& other)
     return *this;
 }
 
+MP& MultiplePrecision::operator/=(const MP& other)
+{
+    division(*this, *this, other);
+
+    return *this;
+}
+
 MP operator+(const MP& lhs, const MP& rhs)
 {
     MP mp;
@@ -235,6 +242,38 @@ MP operator*(const MP& lhs, const MP& rhs)
     return mp;
 }
 
+MP operator/(const MP& lhs, const MP& rhs)
+{
+    MP mp;
+
+    MP::division(mp, lhs, rhs);
+
+    return mp;
+}
+
+bool operator==(const MP& lhs, const MP& rhs)
+{
+    if(lhs.mIsPositive != rhs.mIsPositive)
+        return false;
+    if(lhs.mIntegerPart.size() != rhs.mIntegerPart.size())
+        return false;
+    if(lhs.mDecimalPart.size() != rhs.mDecimalPart.size())
+        return false;
+    
+    for(UINT_64 i = 0; i < lhs.mIntegerPart.size(); i++)
+    {
+        if(lhs.mIntegerPart.at(i) != rhs.mIntegerPart.at(i))
+            return false;
+    }
+    for(UINT_64 i = 0; i < lhs.mDecimalPart.size(); i++)
+    {
+        if(lhs.mDecimalPart.at(i) != rhs.mDecimalPart.at(i))
+            return false;
+    }
+
+    return true;
+}
+
 void MultiplePrecision::print(const MP& mp)
 {
     std::cout << "sign: "
@@ -246,7 +285,8 @@ void MultiplePrecision::print(const MP& mp)
         iter++)
     {
         std::cout << std::setw(9) 
-                  << *iter;
+                  << *iter
+                  << " ";
         std::cout.fill('0');
     }
     std::cout << std::endl
@@ -465,14 +505,19 @@ void MultiplePrecision::subtraction(MP& dst,
         }
     }
 
+    print(dst);
+
     // 正負反転
     if(carry == 1)
     {
         for(auto& e : dst.mDecimalPart)
+        {
             e = MP::CARRY - e;
+        }
         for(auto& e : dst.mIntegerPart)
+        {
             e = MP::CARRY - e;
-
+        }
         dst.mIsPositive = !dst.mIsPositive;
     }
 
@@ -588,6 +633,13 @@ void MultiplePrecision::multiplication(MP& dst,
         addition(result, temp, result);
     }
 
+    for(UINT_64 i = result.mIntegerPart.size();
+        i < dSize;
+        i++)
+    {
+        result.mIntegerPart.push_back(0);
+    }
+
     for(UINT_64 i = dSize; i > 0; i--)
     {
         result.mDecimalPart
@@ -608,16 +660,79 @@ void MultiplePrecision::division(MP& dst,
                                  const MP& lhs, const MP& rhs)
 {
     MP result;
-    MP temp(lhs);
-    temp.mIsPositive = true;
+    MP diff(lhs);
+    diff.mIsPositive = true;
 
-    // 整数部
-    while(temp.mIntegerPart.size() >= 2)
+    UINT_64 dividend = 0;
+     INT_64 digit    = 0;
+    UINT_64 divisor  = 0;
+
+    if(rhs.mIntegerPart.size() >= 1)
     {
-        UINT_64 dividend
-            = 0;
-        UINT_32 divisor;
+        divisor
+            = rhs.mIntegerPart.back();
     }
+    else if(rhs.mIntegerPart.size() == 0 &&
+            rhs.mDecimalPart.size() >= 1)
+    {
+        auto iter = rhs.mDecimalPart.begin();
+        while(*iter == 0)
+            iter++;
+
+        divisor
+            = *iter;
+    }
+    else
+    {
+        diff = MP();
+    }
+
+    while(result.mDecimalPart.size() * 9 < MAX_DEPTH &&
+          (!diff.mIntegerPart.empty() || !diff.mDecimalPart.empty()))
+    // for(int i = 0; i < 3; i++)
+    {
+        digitAlignment(digit, dividend, diff);
+
+        UINT_64 val
+            = dividend / divisor;
+        
+        MP temp;
+        if(digit >= 0)
+        {
+            temp.mIntegerPart.resize(digit + 2, 0);
+            temp.mIntegerPart.at(digit + 1)
+                = static_cast<UINT_32>(val / MP::CARRY);
+            temp.mIntegerPart.at(digit)
+                = static_cast<UINT_32>(val / MP::CARRY);
+        }
+        else if(digit == -1)
+        {
+            temp.mIntegerPart
+                .push_back(static_cast<UINT_32>(val / MP::CARRY));
+            temp.mDecimalPart
+                .push_back(static_cast<UINT_32>(val % MP::CARRY));
+        }
+        else
+        {
+            digit *= -1;
+            temp.mDecimalPart.resize(digit, 0);
+            temp.mDecimalPart.at(digit - 2)
+                = static_cast<UINT_32>(val / MP::CARRY);
+            temp.mDecimalPart.at(digit - 1)
+                = static_cast<UINT_32>(val % MP::CARRY);
+        }
+
+        diff -= temp * rhs;
+        print(diff);
+        result += temp;
+    }   
+
+    result.mIsPositive
+        = (lhs.mIsPositive == rhs.mIsPositive)
+            ? true : false;
+
+    result.shrink();
+    dst = result;
 }
 
 void MultiplePrecision::digitAlignment(  INT_64& digit,
@@ -644,10 +759,10 @@ void MultiplePrecision::digitAlignment(  INT_64& digit,
     else if(lhs.mDecimalPart.size() >= 2)
     {
         digit = 0;
-        while(lhs.mDecimalPart.at(digit) != 0)
+        while(lhs.mDecimalPart.at(digit) == 0)
             digit++;
-        
-        if(lhs.mDecimalPart.size() >= digit + 2)
+
+        if(lhs.mDecimalPart.size() >= static_cast<UINT_64>(digit) + 2)
         {
             dividend
                 = lhs.mDecimalPart.at(digit) * MP::CARRY +
@@ -660,7 +775,7 @@ void MultiplePrecision::digitAlignment(  INT_64& digit,
         }
 
         digit
-            -= 2;
+            = digit * -1 - 2;
     }
     else if(lhs.mIntegerPart.size() == 1 &&
             lhs.mDecimalPart.size() == 0)

@@ -19,7 +19,7 @@ private:
 
 public:
     static       UINT_64 MAX_DEPTH;  // 小数の最大深度(桁数)
-    static const INT_64  INT_64_MAX; // UINT_64 の最大値()
+    static const  INT_64 INT_64_MAX; // UINT_64 の最大値()
 
     // 特殊関数
     MultiplePrecision();

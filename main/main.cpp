@@ -3,11 +3,13 @@
 
 int main(int argc, char** argv)
 {
-    MP a("100 000 000 000 000 000 000");
+    MP a(0);
+    MP b("0. 000 000 000 5");
+    MP c("1 000 000 000");
 
-    MP b("0. 000 000 000 000 000 001");
 
-    MP::print(a * b);
+    MP::print(c - b);
+    // MP::print(a -= a * b);
 
     // mpz_t m;
 
