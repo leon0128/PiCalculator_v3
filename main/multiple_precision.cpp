@@ -281,6 +281,11 @@ bool operator!=(const MP& lhs, const MP& rhs)
 
 bool operator<(const MP& lhs, const MP& rhs)
 {
+    if(!lhs.mIsPositive && rhs.mIsPositive)
+        return true;
+    else if(lhs.mIsPositive && !rhs.mIsPositive)
+        return false;
+
     if(lhs.mIntegerPart.size() < rhs.mIntegerPart.size())
         return true;
     else if(lhs.mIntegerPart.size() > rhs.mIntegerPart.size())
@@ -288,9 +293,9 @@ bool operator<(const MP& lhs, const MP& rhs)
     
     for(UINT_64 i = lhs.mIntegerPart.size(); i > 0; i--)
     {
-        if(lhs.mIntegerPart.at(i) < rhs.mIntegerPart.at(i))
+        if(lhs.mIntegerPart.at(i - 1) < rhs.mIntegerPart.at(i - 1))
             return true;
-        else if(lhs.mIntegerPart.at(i) > rhs.mIntegerPart.at(i))
+        else if(lhs.mIntegerPart.at(i - 1) > rhs.mIntegerPart.at(i - 1))
             return false;
     }
     
@@ -309,6 +314,53 @@ bool operator<(const MP& lhs, const MP& rhs)
         return true;
     else
         return false;
+}
+
+bool operator<=(const MP& lhs, const MP& rhs)
+{
+    if(!lhs.mIsPositive && rhs.mIsPositive)
+        return true;
+    else if(lhs.mIsPositive && !rhs.mIsPositive)
+        return false;
+
+    if(lhs.mIntegerPart.size() < lhs.mIntegerPart.size())
+        return true;
+    else if(lhs.mIntegerPart.size() > rhs.mIntegerPart.size())
+        return false;
+    
+    for(UINT_64 i = lhs.mIntegerPart.size(); i > 0; i--)
+    {
+        if(lhs.mIntegerPart.at(i - 1) < rhs.mIntegerPart.at(i - 1))
+            return true;
+        else if(lhs.mIntegerPart.at(i - i) > rhs.mIntegerPart.at(i - 1))
+            return false;
+    }
+
+    UINT_64 dSize
+        = (lhs.mDecimalPart.size() < rhs.mDecimalPart.size())
+            ? lhs.mDecimalPart.size() : rhs.mDecimalPart.size();
+    for(UINT_64 i = 0; i < dSize; i++)
+    {
+        if(lhs.mDecimalPart.at(i) < rhs.mDecimalPart.at(i))
+            return true;
+        else if(lhs.mDecimalPart.at(i) > rhs.mDecimalPart.at(i))
+            return false;
+    }
+
+    if(lhs.mDecimalPart.size() <= rhs.mDecimalPart.size())
+        return true;
+    else
+        return false;
+}
+
+bool operator>(const MP& lhs, const MP& rhs)
+{
+    return !(lhs <= rhs);
+}
+
+bool operator>=(const MP& lhs, const MP& rhs)
+{
+    return !(lhs < rhs);
 }
 
 void MultiplePrecision::print(const MP& mp)
