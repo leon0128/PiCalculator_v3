@@ -73,6 +73,13 @@ private:
     // 第一引数に第二引数と第三引数の乗算結果を格納
     static void multiplication(MP& dst,
                                const MP& lhs, const MP& rhs);
+    // 第一引数に第二引数と第三引数の除算結果を格納
+    static void division(MP& dst,
+                         const MP& lhs, const MP& rhs);
+    // 除算で使用する桁合わせ用のヘルパー関数
+    static void digitAlignment(  INT_64& digit, 
+                                UINT_64& dividend,
+                               const MP& lhs);
 
     // 最上位が 0 の場合、その要素を削除
     // 最下位が 0 の場合、その要素の削除

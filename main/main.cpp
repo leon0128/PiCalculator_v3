@@ -1,13 +1,27 @@
 #include "multiple_precision.hpp"
+#include <gmp.h>
 
 int main(int argc, char** argv)
 {
-    MP a(-MP::INT_64_MAX);
-    MP b("1298512908432098412095120984210239874520935829385721395230998234109841230-9823098234.000 000 000  000 000 000  000 000 000  000 000 000  1");
+    MP a("100 000 000 000 000 000 000");
 
-    MP c = b - b;
+    MP b("0. 000 000 000 000 000 001");
 
-    MP::print(c);
+    MP::print(a * b);
+
+    // mpz_t m;
+
+    // mpz_init(m);
+    // mpz_set_str(m, "999999999999999999", 10);
+
+    // for(int i = 0; i < 15; i++)
+    // {
+    //     // std::cout << "proc: " << i << std::endl;
+    //     mpz_mul(m, m, m);
+    // }
+    // // mpz_out_str(stdout, 10, m);
+
+    // mpz_clear(m);
 
     return 0;
 }

@@ -246,11 +246,11 @@ void MultiplePrecision::print(const MP& mp)
         iter++)
     {
         std::cout << std::setw(9) 
-                  << *iter
-                  << " ";
+                  << *iter;
         std::cout.fill('0');
     }
-    std::cout << std::endl;
+    std::cout << std::endl
+              << "." << std::endl;;
 
     for(auto iter = mp.mDecimalPart.begin();
         iter != mp.mDecimalPart.end();
@@ -602,6 +602,89 @@ void MultiplePrecision::multiplication(MP& dst,
 
     result.shrink();
     dst = result;
+}
+
+void MultiplePrecision::division(MP& dst,
+                                 const MP& lhs, const MP& rhs)
+{
+    MP result;
+    MP temp(lhs);
+    temp.mIsPositive = true;
+
+    // 整数部
+    while(temp.mIntegerPart.size() >= 2)
+    {
+        UINT_64 dividend
+            = 0;
+        UINT_32 divisor;
+    }
+}
+
+void MultiplePrecision::digitAlignment(  INT_64& digit,
+                                        UINT_64& dividend,
+                                       const MP& lhs)
+{
+    if(lhs.mIntegerPart.size() >= 2)
+    {
+        dividend
+            = *lhs.mIntegerPart.rbegin() * MP::CARRY +
+              *(lhs.mIntegerPart.rbegin() + 1);
+        digit
+            = lhs.mIntegerPart.size() - 2;
+    }
+    else if(lhs.mIntegerPart.size() == 1 &&
+            lhs.mDecimalPart.size() >= 1)
+    {
+        dividend
+            = lhs.mIntegerPart.back() * MP::CARRY +
+              lhs.mDecimalPart.front();
+        digit
+            = -1;
+    }
+    else if(lhs.mDecimalPart.size() >= 2)
+    {
+        digit = 0;
+        while(lhs.mDecimalPart.at(digit) != 0)
+            digit++;
+        
+        if(lhs.mDecimalPart.size() >= digit + 2)
+        {
+            dividend
+                = lhs.mDecimalPart.at(digit) * MP::CARRY +
+                  lhs.mDecimalPart.at(digit + 1);
+        }
+        else
+        {
+            dividend
+                = lhs.mDecimalPart.at(digit) * MP::CARRY;
+        }
+
+        digit
+            -= 2;
+    }
+    else if(lhs.mIntegerPart.size() == 1 &&
+            lhs.mDecimalPart.size() == 0)
+    {
+        dividend
+            = lhs.mIntegerPart.front() * MP::CARRY;
+        digit
+            = -1;
+    } 
+    else if(lhs.mIntegerPart.size() == 0 &&
+            lhs.mDecimalPart.size() == 1)
+    {
+        dividend
+            = lhs.mDecimalPart.front() * MP::CARRY;
+        digit
+            = -2;
+    }
+    else
+    {
+        dividend
+            = 0;
+        digit
+            = 0;
+    }
 }
 
 void MultiplePrecision::shrink()
