@@ -24,6 +24,7 @@ public:
     // 特殊関数
     MultiplePrecision();
     explicit MultiplePrecision(INT_64 value);
+    explicit MultiplePrecision(UINT_64 value);
     explicit MultiplePrecision(int value);
     explicit MultiplePrecision(long value);
     explicit MultiplePrecision(const char* value);
@@ -60,6 +61,14 @@ public:
                            const MP& rhs);
     friend bool operator>=(const MP& lhs,
                            const MP& rhs);
+
+    // 階乗
+    static MP factorial(INT_64 count);
+    // 累乗(指数は正の正数のみ)
+    static MP power(const MP& radix, UINT_64 index);
+    // 絶対値で大きい方を返す
+    static const MP& absoluteMax(const MP& lhs, const MP& rhs);
+    static       MP& absoluteMax(      MP& lhs,       MP& rhs);
 
     static void print(const MP& mp);
 

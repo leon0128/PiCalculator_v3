@@ -1,14 +1,13 @@
 #include "multiple_precision.hpp"
+#include "calculator.hpp"
 
 int main(int argc, char** argv)
 {
-    MP a(0);
-    MP b("3");
-    MP c("1.5");
-    
-    // MP::print(MP("0.75") - MP("1.125"));
+    MP mp;
 
-    MP::print(b / c);
+    Calculator::calculate(mp);
+
+    MP::print(mp);
 
     return 0;
 }

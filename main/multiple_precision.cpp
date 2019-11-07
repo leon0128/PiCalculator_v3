@@ -43,6 +43,11 @@ MultiplePrecision::MultiplePrecision(INT_64 value):
     }
 }
 
+MultiplePrecision::MultiplePrecision(UINT_64 value):
+    MultiplePrecision(static_cast<INT_64>(value))
+{
+}
+
 MultiplePrecision::MultiplePrecision(int value):
     MultiplePrecision(INT_64(value))
 {
@@ -361,6 +366,58 @@ bool operator>(const MP& lhs, const MP& rhs)
 bool operator>=(const MP& lhs, const MP& rhs)
 {
     return !(lhs < rhs);
+}
+
+MP MultiplePrecision::factorial(INT_64 count)
+{
+    MP value(1);
+    
+    for(INT_64 i = 0; i < count; i++)
+        value *= MP(i + 1);
+
+    return value;
+}
+
+MP MultiplePrecision::power(const MP& radix, UINT_64 index)
+{
+    MP value(1);
+
+    for(UINT_64 i = 0; i < index; i++)
+        value *= radix;
+
+    return value;
+}
+
+const MP& MultiplePrecision::absoluteMax(const MP& lhs, const MP& rhs)
+{
+    if(lhs.mIntegerPart.size() > rhs.mIntegerPart.size())
+        return lhs;
+    else if(lhs.mIntegerPart.size() < rhs.mIntegerPart.size())
+        return rhs;
+
+    for(UINT_64 i = lhs.mIntegerPart.size(); i > 0; i--)
+    {
+        if(lhs.mIntegerPart.at(i - 1) > rhs.mIntegerPart.at(i - 1))
+            return lhs;
+        else if(lhs.mIntegerPart.at(i - 1) < rhs.mIntegerPart.at(i - 1))
+            return rhs;
+    }
+
+    UINT_64 dSize
+        = (lhs.mDecimalPart.size() < rhs.mDecimalPart.size())
+            ? lhs.mDecimalPart.size() : rhs.mDecimalPart.size();
+    for(UINT_64 i = 0; i < dSize; i++)
+    {
+        if(lhs.mDecimalPart.at(i) > rhs.mDecimalPart.at(i))
+            return lhs;
+        else if(lhs.mDecimalPart.at(i) < rhs.mDecimalPart.at(i))
+            return rhs;
+    }
+
+    if(lhs.mDecimalPart.size() > rhs.mDecimalPart.size())
+        return lhs;
+    else
+        return rhs;
 }
 
 void MultiplePrecision::print(const MP& mp)
@@ -813,7 +870,8 @@ void MultiplePrecision::division(MP& dst,
         
         MP temp;
         temp.mIsPositive
-            = diff.mIsPositive;
+            = (diff.mIsPositive == rhs.mIsPositive)
+                ? true : false;
 
         if(digit >= 0)
         {
@@ -821,7 +879,7 @@ void MultiplePrecision::division(MP& dst,
             temp.mIntegerPart.at(digit + 1)
                 = static_cast<UINT_32>(val / MP::CARRY);
             temp.mIntegerPart.at(digit)
-                = static_cast<UINT_32>(val / MP::CARRY);
+                = static_cast<UINT_32>(val % MP::CARRY);
         }
         else if(digit == -1)
         {
@@ -842,6 +900,16 @@ void MultiplePrecision::division(MP& dst,
 
         diff -= temp * rhs;
         result += temp;
+
+        // std::cout << "rhs: " << std::endl;
+        // print(rhs);
+        // std::cout << "temp: " << std::endl;
+        // print(temp);
+        // std::cout << "temp * rhs" << std::endl;
+        // print(temp * rhs);
+        // std::cout << "diff" << std::endl;
+        // print(diff);
+        // std::cout << "========" << std::endl;
     }   
 
     result.mIsPositive
