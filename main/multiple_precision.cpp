@@ -323,7 +323,7 @@ bool operator<=(const MP& lhs, const MP& rhs)
     else if(lhs.mIsPositive && !rhs.mIsPositive)
         return false;
 
-    if(lhs.mIntegerPart.size() < lhs.mIntegerPart.size())
+    if(lhs.mIntegerPart.size() < rhs.mIntegerPart.size())
         return lhs.mIsPositive ? true : false;
     else if(lhs.mIntegerPart.size() > rhs.mIntegerPart.size())
         return lhs.mIsPositive ? false : true;
@@ -763,9 +763,9 @@ void MultiplePrecision::division(MP& dst,
     diff.mIsPositive = true;
 
     UINT_64 dividend = 0;
-     INT_64 digit    = 0;
     UINT_64 divisor  = 0;
-
+     INT_64 digit    = 0;
+    
     if(rhs.mIntegerPart.size() >= 1)
     {
         divisor
@@ -786,9 +786,25 @@ void MultiplePrecision::division(MP& dst,
         diff = MP();
     }
 
-    while(result.mDecimalPart.size() * 9 < MAX_DEPTH &&
-          (!diff.mIntegerPart.empty() || !diff.mDecimalPart.empty()))
-    // for(int i = 0; i < 3; i++)
+    auto isValid
+        = [&]
+    {
+        if(diff.mIntegerPart.empty() && diff.mDecimalPart.empty())
+            return true;
+        for(UINT_64 i = 0; i < diff.mDecimalPart.size(); i++)
+        {
+            if(diff.mDecimalPart.at(i) != 0)
+            {
+                if(i * 9 > MAX_DEPTH)
+                    return true;
+                else
+                    return false;
+            }
+        }
+        return false;
+    };
+
+    while(!isValid())
     {
         digitAlignment(digit, dividend, diff);
 
@@ -824,23 +840,8 @@ void MultiplePrecision::division(MP& dst,
                 = static_cast<UINT_32>(val % MP::CARRY);
         }
 
-        std::cout << "digit: " << digit << std::endl;
-        std::cout << "temp: " << std::endl;
-        print(temp);
-        std::cout << "diff_b" << std::endl;
-        print(diff);
-        std::cout << "temp * rhs" << std::endl;
-        print(temp * rhs);
-
         diff -= temp * rhs;
-
-        std::cout << "diff_a" << std::endl;
-        print(diff);
-
         result += temp;
-        print(result);
-
-        std::cout << "=======" << std::endl;
     }   
 
     result.mIsPositive
