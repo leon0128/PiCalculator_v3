@@ -12,11 +12,13 @@ private:
 public:
     enum EAlgorithm
     {
-        RAMANUJAN
+        RAMANUJAN,
+        LEIBNIZ
     };
 
     static void calculate(MP& mp, EAlgorithm = RAMANUJAN);
 
 private:
     static void ramanujan(MP& mp);
+    static void leibniz(MP& mp);
 };

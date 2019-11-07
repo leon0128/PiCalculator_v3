@@ -7,7 +7,10 @@ void Calculator::calculate(MP& mp, EAlgorithm algorithm)
         case(RAMANUJAN):
             ramanujan(mp);
             break;
-        
+        case(LEIBNIZ):
+            leibniz(mp);
+            break;
+
         default:
             std::cerr << "err: algorithm is not implemented." << std::endl;
     }
@@ -24,23 +27,49 @@ void Calculator::ramanujan(MP& mp)
 
     mp = MP();
 
-    for(UINT_64 i = 0; i < 2; i++)
+    for(UINT_64 i = 0; i < 1; i++)
     {
-        MP temp
-            = MP::power(MP::power(_4, i) * MP::factorial(i),
-                        4);
-
         MP dividend
-            = _4                         *
-              MP::power(_882, 2 * i + 1) *
-              temp;
+            = MP::power(_M_1, i) *
+              MP::factorial(4 * i) * 
+              (_1123 + (_21460 * MP(i)));
 
         MP divisor
-            = MP::power(_M_1, i)   *
-              MP::factorial(4 * i) *
-              (_1123 + _21460 * MP(i));
+            = MP::power(_882, 2 * i + 1) *
+              MP::power(MP::power(_4, i) * MP::factorial(i), 4);
 
-        MP res = dividend / divisor;
-        // mp += 
+        mp += dividend / divisor;
+        std::cout << "dividend: " << std::endl;
+        MP::print(dividend);
+        std::cout << "divisor: " << std::endl;
+        MP::print(divisor);
+        std::cout << "mp: " << std::endl;
+        MP::print(mp);
     }
+
+    mp = _4 / mp;
+}
+
+void Calculator::leibniz(MP& mp)
+{
+    mp = MP();
+
+    const MP _4(4);
+    const MP _M_1(-1);
+    const MP _1(1);
+    const MP _2(2);
+
+    for(UINT_64 i = 0; i < 100; i++)
+    {
+        MP dividend
+            = (i % 2 == 0)
+                ? _1 : _M_1;
+
+        MP divisor
+            = _2 * MP(i) + _1;
+        
+        mp += dividend / divisor;
+    }
+
+    mp *= _4;
 }

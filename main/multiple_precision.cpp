@@ -420,6 +420,13 @@ const MP& MultiplePrecision::absoluteMax(const MP& lhs, const MP& rhs)
         return rhs;
 }
 
+MP& MultiplePrecision::absoluteMax(MP& lhs, MP& rhs)
+{
+    const MP& l = lhs;
+    const MP& r = rhs;
+    return (&absoluteMax(l, r) == &lhs) ? lhs : rhs;
+}
+
 void MultiplePrecision::print(const MP& mp)
 {
     std::cout << "sign: "
@@ -525,7 +532,8 @@ void MultiplePrecision::addition(MP& dst,
                 ? 1 : 0;
     }
 
-    dst.mIsPositive = lhs.mIsPositive;
+    dst.mIsPositive
+        = absoluteMax(lhs, rhs).mIsPositive;
     
     dst.mIntegerPart.push_back(static_cast<UINT_32>(carry));
     dst.shrink();
@@ -534,17 +542,9 @@ void MultiplePrecision::addition(MP& dst,
 void MultiplePrecision::subtraction(MP& dst,
                                     const MP& lhs, const MP& rhs)
 {
-    auto absolute
-        = [&]
-    {
-        if(lhs.mIsPositive)
-            return (lhs > rhs) ? &lhs : &rhs;
-        else
-            return (lhs < rhs) ? &lhs : &rhs;
-    };
 
     const MP& larger
-        = *absolute();
+        = absoluteMax(lhs, rhs);
     const MP& smaller
         = (&larger == &lhs)
             ? rhs : lhs;
@@ -666,16 +666,8 @@ void MultiplePrecision::subtraction(MP& dst,
         }
     }
 
-    if(&larger == &lhs)
-    {
-        dst.mIsPositive
-            = larger.mIsPositive;
-    }
-    else
-    {
-        dst.mIsPositive
-            = !larger.mIsPositive;
-    }
+    dst.mIsPositive
+        = larger.mIsPositive;
 
     dst.shrink();
 }
@@ -901,15 +893,15 @@ void MultiplePrecision::division(MP& dst,
         diff -= temp * rhs;
         result += temp;
 
-        // std::cout << "rhs: " << std::endl;
-        // print(rhs);
-        // std::cout << "temp: " << std::endl;
-        // print(temp);
-        // std::cout << "temp * rhs" << std::endl;
-        // print(temp * rhs);
-        // std::cout << "diff" << std::endl;
-        // print(diff);
-        // std::cout << "========" << std::endl;
+        std::cout << "rhs: " << std::endl;
+        print(rhs);
+        std::cout << "temp: " << std::endl;
+        print(temp);
+        std::cout << "temp * rhs" << std::endl;
+        print(temp * rhs);
+        std::cout << "diff" << std::endl;
+        print(diff);
+        std::cout << "========" << std::endl;
     }   
 
     result.mIsPositive
