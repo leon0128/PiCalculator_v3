@@ -148,12 +148,12 @@ private:
     // template<typename A, typename U, typename... Args>
     // static auto get_rebind_alloc(...)decltype(){return nullptr;}
 public:
-    template<typename U>
-    using rebind_alloc = typename ::std::remove_reference<decltype(*get_rebind_alloc<allocator_type, U>(nullptr))>::type;
+    // template<typename U>
+    // using rebind_alloc = typename ::std::remove_reference<decltype(*get_rebind_alloc<allocator_type, U>(nullptr))>::type;
     
-    // rebind_traits<U>
-    template<typename U>
-    using rebind_trais = allocator_traits<rebind_alloc<U>>;
+    // // rebind_traits<U>
+    // template<typename U>
+    // using rebind_trais = allocator_traits<rebind_alloc<U>>;
 
 private:
     // allocator_type に対応する関数が存在するか確認するための関数

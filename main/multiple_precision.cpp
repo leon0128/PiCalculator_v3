@@ -186,7 +186,7 @@ MP& MultiplePrecision::operator-=(const MP& other)
     else if(mIsPositive != other.mIsPositive)
         MP::addition(*this, *this, other);
     else if(!mIsPositive && !other.mIsPositive)
-        MP::subtraction(*this, other, *this);
+        MP::subtraction(*this, *this, other);
     
     return *this;
 }
@@ -228,7 +228,7 @@ MP operator-(const MP& lhs, const MP& rhs)
     else if(lhs.mIsPositive != rhs.mIsPositive)
         MP::addition(mp, lhs, rhs);
     else if(!lhs.mIsPositive && !rhs.mIsPositive)
-        MP::subtraction(mp, rhs, lhs);
+        MP::subtraction(mp, lhs, rhs);
 
     return mp;
 }
@@ -287,16 +287,16 @@ bool operator<(const MP& lhs, const MP& rhs)
         return false;
 
     if(lhs.mIntegerPart.size() < rhs.mIntegerPart.size())
-        return true;
+        return lhs.mIsPositive ? true : false;
     else if(lhs.mIntegerPart.size() > rhs.mIntegerPart.size())
-        return false;
+        return lhs.mIsPositive ? false : true;
     
     for(UINT_64 i = lhs.mIntegerPart.size(); i > 0; i--)
     {
         if(lhs.mIntegerPart.at(i - 1) < rhs.mIntegerPart.at(i - 1))
-            return true;
+            return lhs.mIsPositive ? true : false;
         else if(lhs.mIntegerPart.at(i - 1) > rhs.mIntegerPart.at(i - 1))
-            return false;
+            return lhs.mIsPositive ? false : true;
     }
     
     UINT_64 dSize
@@ -305,15 +305,15 @@ bool operator<(const MP& lhs, const MP& rhs)
     for(UINT_64 i = 0; i < dSize; i++)
     {
         if(lhs.mDecimalPart.at(i) < rhs.mDecimalPart.at(i))
-            return true;
+            return lhs.mIsPositive ? true : false;
         else if(lhs.mDecimalPart.at(i) > rhs.mDecimalPart.at(i))
-            return false;
+            return lhs.mIsPositive ? false : true;
     }
     
     if(lhs.mDecimalPart.size() < rhs.mDecimalPart.size())
-        return true;
+        return lhs.mIsPositive ? true : false;
     else
-        return false;
+        return lhs.mIsPositive ? false : true;
 }
 
 bool operator<=(const MP& lhs, const MP& rhs)
@@ -324,16 +324,16 @@ bool operator<=(const MP& lhs, const MP& rhs)
         return false;
 
     if(lhs.mIntegerPart.size() < lhs.mIntegerPart.size())
-        return true;
+        return lhs.mIsPositive ? true : false;
     else if(lhs.mIntegerPart.size() > rhs.mIntegerPart.size())
-        return false;
+        return lhs.mIsPositive ? false : true;
     
     for(UINT_64 i = lhs.mIntegerPart.size(); i > 0; i--)
     {
         if(lhs.mIntegerPart.at(i - 1) < rhs.mIntegerPart.at(i - 1))
-            return true;
+            return lhs.mIsPositive ? true :false;
         else if(lhs.mIntegerPart.at(i - i) > rhs.mIntegerPart.at(i - 1))
-            return false;
+            return lhs.mIsPositive ? false : true;
     }
 
     UINT_64 dSize
@@ -342,15 +342,15 @@ bool operator<=(const MP& lhs, const MP& rhs)
     for(UINT_64 i = 0; i < dSize; i++)
     {
         if(lhs.mDecimalPart.at(i) < rhs.mDecimalPart.at(i))
-            return true;
+            return lhs.mIsPositive ? true : false;
         else if(lhs.mDecimalPart.at(i) > rhs.mDecimalPart.at(i))
-            return false;
+            return lhs.mIsPositive ? false : true;
     }
 
     if(lhs.mDecimalPart.size() <= rhs.mDecimalPart.size())
-        return true;
+        return lhs.mIsPositive ? true : false;
     else
-        return false;
+        return lhs.mIsPositive ? false : true;
 }
 
 bool operator>(const MP& lhs, const MP& rhs)
@@ -477,6 +477,21 @@ void MultiplePrecision::addition(MP& dst,
 void MultiplePrecision::subtraction(MP& dst,
                                     const MP& lhs, const MP& rhs)
 {
+    auto getAbsolute
+        = [&]
+    {
+        if(lhs.mIsPositive)
+            return (&lhs > &rhs) ? &lhs : &rhs;
+        else
+            return (&lhs > &rhs) ? &rhs : &lhs;
+    };
+
+    const MP& larger
+        = *getAbsolute();
+    const MP& smaller
+        = (&larger == &lhs)
+            ? rhs : lhs;
+
     UINT_64 dSize
         = (lhs.mDecimalPart.size() > rhs.mDecimalPart.size())
             ? lhs.mDecimalPart.size() : rhs.mDecimalPart.size();
@@ -490,26 +505,26 @@ void MultiplePrecision::subtraction(MP& dst,
     UINT_64 carry = 0;
 
     // 小数部
-    if(lhs.mDecimalPart.size() > rhs.mDecimalPart.size())
+    if(larger.mDecimalPart.size() > smaller.mDecimalPart.size())
     {
-        for(UINT_64 i = lhs.mDecimalPart.size();
-            i > rhs.mDecimalPart.size();
+        for(UINT_64 i = larger.mDecimalPart.size();
+            i > smaller.mDecimalPart.size();
             i--)
         {
             dst.mDecimalPart.at(i - 1)
-                = lhs.mDecimalPart.at(i - 1);
+                = larger.mDecimalPart.at(i - 1);
         }
     }
-    else if(lhs.mDecimalPart.size() < rhs.mDecimalPart.size())
+    else if(larger.mDecimalPart.size() < smaller.mDecimalPart.size())
     {
-        for(UINT_64 i = rhs.mDecimalPart.size();
-            i > lhs.mDecimalPart.size();
+        for(UINT_64 i = smaller.mDecimalPart.size();
+            i > larger.mDecimalPart.size();
             i--)
         {
             UINT_64 val
                 = MP::CARRY -
                   carry     -
-                  static_cast<UINT_64>(rhs.mDecimalPart.at(i - 1));
+                  static_cast<UINT_64>(smaller.mDecimalPart.at(i - 1));
             
             dst.mDecimalPart.at(i - 1)
                 = static_cast<UINT_32>(val % MP::CARRY);
@@ -527,8 +542,8 @@ void MultiplePrecision::subtraction(MP& dst,
     {
         UINT_64 val
             = MP::CARRY +
-              static_cast<UINT_64>(lhs.mDecimalPart.at(i - 1)) -
-              static_cast<UINT_64>(rhs.mDecimalPart.at(i - 1)) -
+              static_cast<UINT_64>(larger.mDecimalPart.at(i - 1)) -
+              static_cast<UINT_64>(smaller.mDecimalPart.at(i - 1)) -
               carry;
         
         dst.mDecimalPart.at(i - 1)
@@ -539,16 +554,16 @@ void MultiplePrecision::subtraction(MP& dst,
     }
     // 整数部
     iSize
-        = (lhs.mIntegerPart.size() < rhs.mIntegerPart.size())
-            ? lhs.mIntegerPart.size() : rhs.mIntegerPart.size();
+        = (larger.mIntegerPart.size() < smaller.mIntegerPart.size())
+            ? larger.mIntegerPart.size() : smaller.mIntegerPart.size();
     for(UINT_64 i = 0;
         i < iSize;
         i++)
     {
         UINT_64 val
             = MP::CARRY +
-              static_cast<UINT_64>(lhs.mIntegerPart.at(i)) -
-              static_cast<UINT_64>(rhs.mIntegerPart.at(i)) -
+              static_cast<UINT_64>(larger.mIntegerPart.at(i)) -
+              static_cast<UINT_64>(smaller.mIntegerPart.at(i)) -
               carry;
         
         dst.mIntegerPart.at(i)
@@ -557,15 +572,15 @@ void MultiplePrecision::subtraction(MP& dst,
             = (val >= MP::CARRY)
                 ? 0 : 1;
     }
-    if(lhs.mIntegerPart.size() > rhs.mIntegerPart.size())
+    if(larger.mIntegerPart.size() > smaller.mIntegerPart.size())
     {
-        for(UINT_64 i = rhs.mIntegerPart.size();
-            i < lhs.mIntegerPart.size();
+        for(UINT_64 i = smaller.mIntegerPart.size();
+            i < larger.mIntegerPart.size();
             i++)
         {
             UINT_64 val
                 = MP::CARRY +
-                  static_cast<UINT_64>(lhs.mIntegerPart.at(i)) -
+                  static_cast<UINT_64>(larger.mIntegerPart.at(i)) -
                   carry;
             
             dst.mIntegerPart.at(i)
@@ -575,15 +590,15 @@ void MultiplePrecision::subtraction(MP& dst,
                     ? 0 : 1;
         }
     }
-    else if(lhs.mIntegerPart.size() < rhs.mIntegerPart.size())
+    else if(larger.mIntegerPart.size() < smaller.mIntegerPart.size())
     {
-        for(UINT_64 i = lhs.mIntegerPart.size();
-            i < rhs.mIntegerPart.size();
+        for(UINT_64 i = larger.mIntegerPart.size();
+            i < smaller.mIntegerPart.size();
             i++)
         {
             UINT_64 val
                 = MP::CARRY -
-                  static_cast<UINT_64>(rhs.mIntegerPart.at(i)) -
+                  static_cast<UINT_64>(smaller.mIntegerPart.at(i)) -
                   carry;
             
             dst.mIntegerPart.at(i)
@@ -594,20 +609,15 @@ void MultiplePrecision::subtraction(MP& dst,
         }
     }
 
-    print(dst);
-
-    // 正負反転
-    if(carry == 1)
+    if(&larger == &lhs)
     {
-        for(auto& e : dst.mDecimalPart)
-        {
-            e = MP::CARRY - e;
-        }
-        for(auto& e : dst.mIntegerPart)
-        {
-            e = MP::CARRY - e;
-        }
-        dst.mIsPositive = !dst.mIsPositive;
+        dst.mIsPositive
+            = larger.mIsPositive;
+    }
+    else
+    {
+        dst.mIsPositive
+            = !larger.mIsPositive;
     }
 
     dst.shrink();
@@ -786,6 +796,9 @@ void MultiplePrecision::division(MP& dst,
             = dividend / divisor;
         
         MP temp;
+        temp.mIsPositive
+            = diff.mIsPositive;
+
         if(digit >= 0)
         {
             temp.mIntegerPart.resize(digit + 2, 0);
@@ -811,9 +824,23 @@ void MultiplePrecision::division(MP& dst,
                 = static_cast<UINT_32>(val % MP::CARRY);
         }
 
-        diff -= temp * rhs;
+        std::cout << "digit: " << digit << std::endl;
+        std::cout << "temp: " << std::endl;
+        print(temp);
+        std::cout << "diff_b" << std::endl;
         print(diff);
+        std::cout << "temp * rhs" << std::endl;
+        print(temp * rhs);
+
+        diff -= temp * rhs;
+
+        std::cout << "diff_a" << std::endl;
+        print(diff);
+
         result += temp;
+        print(result);
+
+        std::cout << "=======" << std::endl;
     }   
 
     result.mIsPositive
