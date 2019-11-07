@@ -477,17 +477,17 @@ void MultiplePrecision::addition(MP& dst,
 void MultiplePrecision::subtraction(MP& dst,
                                     const MP& lhs, const MP& rhs)
 {
-    auto getAbsolute
+    auto absolute
         = [&]
     {
         if(lhs.mIsPositive)
-            return (&lhs > &rhs) ? &lhs : &rhs;
+            return (lhs > rhs) ? &lhs : &rhs;
         else
-            return (&lhs > &rhs) ? &rhs : &lhs;
+            return (lhs < rhs) ? &lhs : &rhs;
     };
 
     const MP& larger
-        = *getAbsolute();
+        = *absolute();
     const MP& smaller
         = (&larger == &lhs)
             ? rhs : lhs;
