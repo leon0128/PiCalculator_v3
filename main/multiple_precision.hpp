@@ -92,8 +92,7 @@ private:
     // 除算で使用する桁合わせ用のヘルパー関数
     static void digitAlignment(  INT_64& digit, 
                                 UINT_64& dividend,
-                               const MP& difference,
-                               const MP& divisor);
+                               const MP& difference);
 
     // 最上位が 0 の場合、その要素を削除
     // 最下位が 0 の場合、その要素の削除

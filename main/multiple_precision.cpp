@@ -848,21 +848,42 @@ void MultiplePrecision::division(MP& dst,
     UINT_64 dividend = 0;
     UINT_64 divisor  = 0;
      INT_64 digit    = 0;
-    
-    if(rhs.mIntegerPart.size() >= 1)
+     INT_64 rhsOff   = rhs.offset();
+ 
+    if(rhs.mIntegerPart.size() >= 2)
     {
         divisor
-            = rhs.mIntegerPart.back();
+            = MP::CARRY *
+              static_cast<UINT_64>(*rhs.mIntegerPart.rbegin()) +
+              static_cast<UINT_64>(*(rhs.mIntegerPart.rbegin() + 1));
     }
-    else if(rhs.mIntegerPart.size() == 0 &&
-            rhs.mDecimalPart.size() >= 1)
+    else if(rhs.mIntegerPart.size() == 1 &&
+            !rhs.mDecimalPart.empty())
     {
-        auto iter = rhs.mDecimalPart.begin();
-        while(*iter == 0)
-            iter++;
-
         divisor
-            = *iter;
+            = MP::CARRY *
+              static_cast<UINT_64>(rhs.mIntegerPart.front()) +
+              static_cast<UINT_64>(rhs.mDecimalPart.front());
+    }
+    else if(static_cast<INT_64>(rhs.mDecimalPart.size()) >= rhsOff * -1 + 1)
+    {
+        divisor
+            = MP::CARRY *
+              static_cast<UINT_64>(rhs.mDecimalPart.at(rhsOff * -1 - 1)) +
+              static_cast<UINT_64>(rhs.mDecimalPart.at(rhsOff * -1));
+    }
+    else if(rhs.mIntegerPart.size() == 1 &&
+            rhs.mDecimalPart.empty())
+    {
+        divisor
+            = MP::CARRY *
+              static_cast<UINT_64>(rhs.mIntegerPart.front());
+    }
+    else if(static_cast<INT_64>(rhs.mDecimalPart.size()) == rhsOff * -1)
+    {
+        divisor
+            = MP::CARRY *
+              static_cast<UINT_64>(rhs.mDecimalPart.back());
     }
     else
     {
@@ -889,10 +910,20 @@ void MultiplePrecision::division(MP& dst,
 
     while(!isValid())
     {
-        digitAlignment(digit, dividend, diff, rhs);
+        digitAlignment(digit, dividend, diff);
 
-        UINT_64 val
-            = dividend / divisor;
+        UINT_64 val = 0;
+        if(dividend >= divisor)
+        {
+            val    = dividend / divisor;
+            digit -= rhsOff - 1;
+        }
+        else
+        {
+            val    = dividend / 
+                    (divisor / MP::CARRY);
+            digit -= rhsOff; 
+        }
         
         MP temp;
         temp.mIsPositive
@@ -938,8 +969,7 @@ void MultiplePrecision::division(MP& dst,
 
 void MultiplePrecision::digitAlignment(  INT_64& digit,
                                         UINT_64& dividend,
-                                       const MP& lhs,
-                                       const MP& rhs)
+                                       const MP& lhs)
 {
     if(lhs.mIntegerPart.size() >= 2)
     {
@@ -947,8 +977,7 @@ void MultiplePrecision::digitAlignment(  INT_64& digit,
             = *lhs.mIntegerPart.rbegin() * MP::CARRY +
               *(lhs.mIntegerPart.rbegin() + 1);
         digit
-            = lhs.mIntegerPart.size() - 2 -
-              rhs.offset();
+            = lhs.mIntegerPart.size() - 2;
     }
     else if(lhs.mIntegerPart.size() == 1 &&
             lhs.mDecimalPart.size() >= 1)
@@ -957,7 +986,7 @@ void MultiplePrecision::digitAlignment(  INT_64& digit,
             = lhs.mIntegerPart.back() * MP::CARRY +
               lhs.mDecimalPart.front();
         digit
-            = -1 - rhs.offset();
+            = -1;
     }
     else if(lhs.mDecimalPart.size() >= 2)
     {
@@ -978,7 +1007,7 @@ void MultiplePrecision::digitAlignment(  INT_64& digit,
         }
 
         digit
-            = digit * -1 - 2 - rhs.offset();
+            = digit * -1 - 2;
     }
     else if(lhs.mIntegerPart.size() == 1 &&
             lhs.mDecimalPart.size() == 0)
@@ -986,7 +1015,7 @@ void MultiplePrecision::digitAlignment(  INT_64& digit,
         dividend
             = lhs.mIntegerPart.front() * MP::CARRY;
         digit
-            = -1 - rhs.offset();
+            = -1;
     } 
     else if(lhs.mIntegerPart.size() == 0 &&
             lhs.mDecimalPart.size() == 1)
@@ -994,7 +1023,7 @@ void MultiplePrecision::digitAlignment(  INT_64& digit,
         dividend
             = lhs.mDecimalPart.front() * MP::CARRY;
         digit
-            = -2 - rhs.offset();
+            = -2;
     }
     else
     {
