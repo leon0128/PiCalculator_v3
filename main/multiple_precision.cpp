@@ -1039,5 +1039,36 @@ void MultiplePrecision::simpleOutput(const MP& mp)
 
 void MultiplePrecision::complexOutput(const MP& mp)
 {
+    INT_64 current
+        = (mp.mIntegerPart.size() * 9 / 50) + 1;
 
+    std::cout << "{sign: " << (mp.mIsPositive ? "+" : "-")
+              << ", Integer: " << (mp.mIntegerPart.size() * 9)
+              << ", Decimal: " << (mp.mDecimalPart.size() * 9)
+              << "}" << std::endl;
+    std::cout << "   ========== ========== ========== ========== ==========" << std::endl;
+
+
+    LEON::vector<char> intVector;
+    for(auto iter = mp.mIntegerPart.begin();
+        iter != mp.mIntegerPart.end();
+        iter++)
+    {
+        for(INT_64 i = 1; i < MP::CARRY; i *= 10)
+            intVector.push_back((*iter / i) % i + '0')
+    }
+
+    if(mp.mIntegerPart.empty())
+    {
+        std::cout << ">> "
+                  << "           "
+                  << "           "
+                  << "           "
+                  << "           "
+                  << "         0";
+    }
+    else
+    {
+        
+    }
 }

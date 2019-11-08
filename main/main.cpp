@@ -7,7 +7,7 @@ int main(int argc, char** argv)
 
     Calculator::calculate(mp);
 
-    MP::output(mp);
+    MP::output(mp, MP::COMPLEX);
 
     return 0;
 }
