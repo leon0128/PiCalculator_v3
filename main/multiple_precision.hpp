@@ -3,8 +3,7 @@
 #include "vector.hpp"
 
 #include <stdexcept> // error
-#include <iostream>
-#include <iomanip>
+#include <iostream>  // cout, endl, cerr
 
 class MultiplePrecision;
 using MP = MultiplePrecision;
@@ -23,11 +22,11 @@ public:
 
     // 特殊関数
     MultiplePrecision();
-    explicit MultiplePrecision(INT_64 value);
-    explicit MultiplePrecision(UINT_64 value);
-    explicit MultiplePrecision(int value);
-    explicit MultiplePrecision(long value);
-    explicit MultiplePrecision(const char* value);
+    MultiplePrecision(INT_64 value);
+    MultiplePrecision(UINT_64 value);
+    MultiplePrecision(int value);
+    MultiplePrecision(long value);
+    MultiplePrecision(const char* value);
     MultiplePrecision(const MP& other);
     MultiplePrecision(MP&& other);
     ~MultiplePrecision();
@@ -70,13 +69,21 @@ public:
     static const MP& absoluteMax(const MP& lhs, const MP& rhs);
     static       MP& absoluteMax(      MP& lhs,       MP& rhs);
 
-    static void print(const MP& mp);
+    // 出力の形式
+    enum EKind
+    {
+        SIMPLE, // 羅列
+        COMPLEX // 桁数、空白
+    };
+    static void output(const MP& mp, EKind kind = SIMPLE);
 
 private:
     // 第一引数に第二引数と第三引数の加算結果を格納
+    // 演算結果の符号は lhs の値が使用される
     static void addition(MP& dst,
                          const MP& lhs, const MP& rhs);
     // 第一引数に第二引数と第三引数の減算結果を格納
+    // 演算結果の符号は |lhs| > |rhs| なら lhs の値が使用される
     static void subtraction(MP& dst,
                             const MP& lhs, const MP& rhs);
     // 第一引数に第二引数と第三引数の乗算結果を格納
@@ -88,11 +95,18 @@ private:
     // 除算で使用する桁合わせ用のヘルパー関数
     static void digitAlignment(  INT_64& digit, 
                                 UINT_64& dividend,
-                               const MP& lhs);
+                               const MP& difference,
+                               const MP& divisor);
 
     // 最上位が 0 の場合、その要素を削除
     // 最下位が 0 の場合、その要素の削除
     void shrink();
+    // 数値の開始地点の取得 (1.0 == 0, 0.1 = -1)
+    INT_64 offset() const; 
+
+    // output の関数
+    static void simpleOutput (const MP& mp);
+    static void complexOutput(const MP& mp);
 
     LEON::vector<UINT_32> mIntegerPart; // 整数部(1 つの要素に 9桁, 10進)
     LEON::vector<UINT_32> mDecimalPart; // 小数部(1 つの要素に 9桁, 10進)

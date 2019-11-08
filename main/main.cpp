@@ -3,16 +3,11 @@
 
 int main(int argc, char** argv)
 {
-    // MP mp;
+    MP mp;
 
-    // Calculator::calculate(mp);
+    Calculator::calculate(mp);
 
-    // MP::print(mp);
-
-    MP a(4);
-    MP b("1.5");
-
-    MP::print(a / b);
+    MP::output(mp);
 
     return 0;
 }

@@ -27,7 +27,7 @@ void Calculator::ramanujan(MP& mp)
 
     mp = MP();
 
-    for(UINT_64 i = 0; i < 1; i++)
+    for(UINT_64 i = 0; i < 20; i++)
     {
         MP dividend
             = MP::power(_M_1, i) *
@@ -39,12 +39,6 @@ void Calculator::ramanujan(MP& mp)
               MP::power(MP::power(_4, i) * MP::factorial(i), 4);
 
         mp += dividend / divisor;
-        std::cout << "dividend: " << std::endl;
-        MP::print(dividend);
-        std::cout << "divisor: " << std::endl;
-        MP::print(divisor);
-        std::cout << "mp: " << std::endl;
-        MP::print(mp);
     }
 
     mp = _4 / mp;

@@ -218,7 +218,7 @@ MP operator+(const MP& lhs, const MP& rhs)
         MP::addition(mp, lhs, rhs);
     else if(!lhs.mIsPositive && rhs.mIsPositive)
         MP::subtraction(mp, rhs, lhs);
-    else if(lhs.mIsPositive && rhs.mIsPositive)
+    else if(lhs.mIsPositive && !rhs.mIsPositive)
         MP::subtraction(mp, lhs, rhs);
 
     return mp;
@@ -427,34 +427,20 @@ MP& MultiplePrecision::absoluteMax(MP& lhs, MP& rhs)
     return (&absoluteMax(l, r) == &lhs) ? lhs : rhs;
 }
 
-void MultiplePrecision::print(const MP& mp)
+void MultiplePrecision::output(const MP& mp, EKind kind)
 {
-    std::cout << "sign: "
-              << ((mp.mIsPositive) ? "+" : "-")
-              << std::endl;
-
-    for(auto iter = mp.mIntegerPart.rbegin();
-        iter != mp.mIntegerPart.rend();
-        iter++)
+    switch(kind)
     {
-        std::cout << std::setw(9) 
-                  << *iter
-                  << " ";
-        std::cout.fill('0');
+        case(SIMPLE):
+            simpleOutput(mp);
+            break;
+        case(COMPLEX):
+            complexOutput(mp);
+            break;
+        
+        default:
+            std::cout << "err: output method is undefined." << std::endl;
     }
-    std::cout << std::endl
-              << "." << std::endl;;
-
-    for(auto iter = mp.mDecimalPart.begin();
-        iter != mp.mDecimalPart.end();
-        iter++)
-    {
-        std::cout << std::setw(9) 
-                  << *iter
-                  << " ";
-        std::cout.fill('0');
-    }
-    std::cout << std::endl;
 }
 
 void MultiplePrecision::addition(MP& dst,
@@ -533,7 +519,7 @@ void MultiplePrecision::addition(MP& dst,
     }
 
     dst.mIsPositive
-        = absoluteMax(lhs, rhs).mIsPositive;
+        = lhs.mIsPositive;
     
     dst.mIntegerPart.push_back(static_cast<UINT_32>(carry));
     dst.shrink();
@@ -667,7 +653,8 @@ void MultiplePrecision::subtraction(MP& dst,
     }
 
     dst.mIsPositive
-        = larger.mIsPositive;
+        = (&larger == &lhs)
+            ? larger.mIsPositive : !larger.mIsPositive;
 
     dst.shrink();
 }
@@ -855,7 +842,7 @@ void MultiplePrecision::division(MP& dst,
 
     while(!isValid())
     {
-        digitAlignment(digit, dividend, diff);
+        digitAlignment(digit, dividend, diff, rhs);
 
         UINT_64 val
             = dividend / divisor;
@@ -892,16 +879,6 @@ void MultiplePrecision::division(MP& dst,
 
         diff -= temp * rhs;
         result += temp;
-
-        std::cout << "rhs: " << std::endl;
-        print(rhs);
-        std::cout << "temp: " << std::endl;
-        print(temp);
-        std::cout << "temp * rhs" << std::endl;
-        print(temp * rhs);
-        std::cout << "diff" << std::endl;
-        print(diff);
-        std::cout << "========" << std::endl;
     }   
 
     result.mIsPositive
@@ -914,7 +891,8 @@ void MultiplePrecision::division(MP& dst,
 
 void MultiplePrecision::digitAlignment(  INT_64& digit,
                                         UINT_64& dividend,
-                                       const MP& lhs)
+                                       const MP& lhs,
+                                       const MP& rhs)
 {
     if(lhs.mIntegerPart.size() >= 2)
     {
@@ -922,7 +900,8 @@ void MultiplePrecision::digitAlignment(  INT_64& digit,
             = *lhs.mIntegerPart.rbegin() * MP::CARRY +
               *(lhs.mIntegerPart.rbegin() + 1);
         digit
-            = lhs.mIntegerPart.size() - 2;
+            = lhs.mIntegerPart.size() - 2 -
+              rhs.offset();
     }
     else if(lhs.mIntegerPart.size() == 1 &&
             lhs.mDecimalPart.size() >= 1)
@@ -931,7 +910,7 @@ void MultiplePrecision::digitAlignment(  INT_64& digit,
             = lhs.mIntegerPart.back() * MP::CARRY +
               lhs.mDecimalPart.front();
         digit
-            = -1;
+            = -1 - rhs.offset();
     }
     else if(lhs.mDecimalPart.size() >= 2)
     {
@@ -952,7 +931,7 @@ void MultiplePrecision::digitAlignment(  INT_64& digit,
         }
 
         digit
-            = digit * -1 - 2;
+            = digit * -1 - 2 - rhs.offset();
     }
     else if(lhs.mIntegerPart.size() == 1 &&
             lhs.mDecimalPart.size() == 0)
@@ -960,7 +939,7 @@ void MultiplePrecision::digitAlignment(  INT_64& digit,
         dividend
             = lhs.mIntegerPart.front() * MP::CARRY;
         digit
-            = -1;
+            = -1 - rhs.offset();
     } 
     else if(lhs.mIntegerPart.size() == 0 &&
             lhs.mDecimalPart.size() == 1)
@@ -968,7 +947,7 @@ void MultiplePrecision::digitAlignment(  INT_64& digit,
         dividend
             = lhs.mDecimalPart.front() * MP::CARRY;
         digit
-            = -2;
+            = -2 - rhs.offset();
     }
     else
     {
@@ -998,4 +977,67 @@ void MultiplePrecision::shrink()
         else
             break;
     }
+}
+
+INT_64 MultiplePrecision::offset() const
+{
+    if(mIntegerPart.size() > 0)
+        return mIntegerPart.size() - 1;
+
+    for(UINT_64 i = 0; i < mDecimalPart.size(); i++)
+    {
+        if(mDecimalPart.at(i) != 0)
+            return static_cast<INT_64>(i) * -1;
+    }
+    
+    return 0;
+}
+
+void MultiplePrecision::simpleOutput(const MP& mp)
+{
+    std::cout << (mp.mIsPositive ? "+" : "-");
+
+    if(mp.mIntegerPart.empty())
+        std::cout << "0";
+    else
+        std::cout << (*mp.mIntegerPart.rbegin());
+
+    for(auto iter = mp.mIntegerPart.rbegin() + 1;
+        iter != mp.mIntegerPart.rend(); 
+        iter++)
+    {
+        for(int i = MP::CARRY / 10; i >= 1; i /= 10)
+        {
+            if(*iter / i == 0)
+                std::cout << "0";
+            else
+            {
+                std::cout << (*iter);
+                break;
+            }
+        }
+    }
+    
+    std::cout << ".";
+
+    for(auto iter = mp.mDecimalPart.begin();
+        iter != mp.mDecimalPart.end();
+        iter++)
+    {
+        for(int i = MP::CARRY / 10; i >= 1; i /= 10)
+        {
+            if(*iter / i == 0)
+                std::cout << "0";
+            else
+            {
+                std::cout << (*iter);
+                break;
+            }
+        }
+    }
+}
+
+void MultiplePrecision::complexOutput(const MP& mp)
+{
+
 }
