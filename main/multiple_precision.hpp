@@ -68,14 +68,11 @@ public:
     // 絶対値で大きい方を返す
     static const MP& absoluteMax(const MP& lhs, const MP& rhs);
     static       MP& absoluteMax(      MP& lhs,       MP& rhs);
+    // UINT_64 を取得する
+    static UINT_64 convert(const MP& mp);
 
-    // 出力の形式
-    enum EKind
-    {
-        SIMPLE, // 羅列
-        COMPLEX // 桁数、空白
-    };
-    static void output(const MP& mp, EKind kind = SIMPLE);
+    // 出力
+    static void output(const MP& mp);
 
 private:
     // 第一引数に第二引数と第三引数の加算結果を格納
@@ -106,7 +103,6 @@ private:
 
     // output の関数
     static void simpleOutput (const MP& mp);
-    static void complexOutput(const MP& mp);
 
     LEON::vector<UINT_32> mIntegerPart; // 整数部(1 つの要素に 9桁, 10進)
     LEON::vector<UINT_32> mDecimalPart; // 小数部(1 つの要素に 9桁, 10進)

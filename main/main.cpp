@@ -1,13 +1,15 @@
-#include "multiple_precision.hpp"
 #include "calculator.hpp"
 
 int main(int argc, char** argv)
 {
     MP mp;
 
-    Calculator::calculate(mp);
+    if(argc == 1)
+        Calculator::calculate(mp);
+    else
+        Calculator::calculate(mp, MP::convert(MP(argv[1])));
 
-    MP::output(mp, MP::COMPLEX);
+    MP::output(mp);
 
     return 0;
 }

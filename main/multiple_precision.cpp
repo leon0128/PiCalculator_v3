@@ -1,7 +1,7 @@
 #include "multiple_precision.hpp"
 
 const UINT_64 MP::CARRY      = 1000000000;
-      UINT_64 MP::MAX_DEPTH  = 100;
+      UINT_64 MP::MAX_DEPTH  = 1000;
 const  INT_64 MP::INT_64_MAX = 999999999999999999;
 
 static_assert(sizeof(UINT_32) == 4,
@@ -427,20 +427,67 @@ MP& MultiplePrecision::absoluteMax(MP& lhs, MP& rhs)
     return (&absoluteMax(l, r) == &lhs) ? lhs : rhs;
 }
 
-void MultiplePrecision::output(const MP& mp, EKind kind)
+UINT_64 MultiplePrecision::convert(const MP& mp)
 {
-    switch(kind)
+    if(mp.mIntegerPart.size() == 0)
+        return 0;
+    
+    if(mp.mIntegerPart.size() == 1)
+        return mp.mIntegerPart.front();
+    
+    UINT_64 val
+        = static_cast<UINT_64>(mp.mIntegerPart.at(1)) *
+          MP::CARRY +
+          static_cast<UINT_64>(mp.mIntegerPart.at(0));
+    return val;
+}
+
+void MultiplePrecision::output(const MP& mp)
+{
+    std::cout << (mp.mIsPositive ? "+" : "-");
+
+    if(mp.mIntegerPart.empty())
+        std::cout << "0";
+    else
     {
-        case(SIMPLE):
-            simpleOutput(mp);
-            break;
-        case(COMPLEX):
-            complexOutput(mp);
-            break;
-        
-        default:
-            std::cout << "err: output method is undefined." << std::endl;
+        std::cout << (*mp.mIntegerPart.rbegin());
+    
+        for(auto iter = mp.mIntegerPart.rbegin() + 1;
+            iter != mp.mIntegerPart.rend(); 
+            iter++)
+        {
+            for(int i = MP::CARRY / 10; i >= 1; i /= 10)
+            {
+                if(*iter / i == 0)
+                    std::cout << "0";
+                else
+                {
+                    std::cout << (*iter);
+                    break;
+                }
+            }
+        }
     }
+
+    std::cout << ".";
+
+    for(auto iter = mp.mDecimalPart.begin();
+        iter != mp.mDecimalPart.end();
+        iter++)
+    {
+        for(int i = MP::CARRY / 10; i >= 1; i /= 10)
+        {
+            if(*iter / i == 0)
+                std::cout << "0";
+            else
+            {
+                std::cout << (*iter);
+                break;
+            }
+        }
+    }
+
+    std::cout << " [" << mp.mDecimalPart.size() * 9 << "]" << std::endl;
 }
 
 void MultiplePrecision::addition(MP& dst,
@@ -991,84 +1038,4 @@ INT_64 MultiplePrecision::offset() const
     }
     
     return 0;
-}
-
-void MultiplePrecision::simpleOutput(const MP& mp)
-{
-    std::cout << (mp.mIsPositive ? "+" : "-");
-
-    if(mp.mIntegerPart.empty())
-        std::cout << "0";
-    else
-        std::cout << (*mp.mIntegerPart.rbegin());
-
-    for(auto iter = mp.mIntegerPart.rbegin() + 1;
-        iter != mp.mIntegerPart.rend(); 
-        iter++)
-    {
-        for(int i = MP::CARRY / 10; i >= 1; i /= 10)
-        {
-            if(*iter / i == 0)
-                std::cout << "0";
-            else
-            {
-                std::cout << (*iter);
-                break;
-            }
-        }
-    }
-    
-    std::cout << ".";
-
-    for(auto iter = mp.mDecimalPart.begin();
-        iter != mp.mDecimalPart.end();
-        iter++)
-    {
-        for(int i = MP::CARRY / 10; i >= 1; i /= 10)
-        {
-            if(*iter / i == 0)
-                std::cout << "0";
-            else
-            {
-                std::cout << (*iter);
-                break;
-            }
-        }
-    }
-}
-
-void MultiplePrecision::complexOutput(const MP& mp)
-{
-    INT_64 current
-        = (mp.mIntegerPart.size() * 9 / 50) + 1;
-
-    std::cout << "{sign: " << (mp.mIsPositive ? "+" : "-")
-              << ", Integer: " << (mp.mIntegerPart.size() * 9)
-              << ", Decimal: " << (mp.mDecimalPart.size() * 9)
-              << "}" << std::endl;
-    std::cout << "   ========== ========== ========== ========== ==========" << std::endl;
-
-
-    LEON::vector<char> intVector;
-    for(auto iter = mp.mIntegerPart.begin();
-        iter != mp.mIntegerPart.end();
-        iter++)
-    {
-        for(INT_64 i = 1; i < MP::CARRY; i *= 10)
-            intVector.push_back((*iter / i) % i + '0')
-    }
-
-    if(mp.mIntegerPart.empty())
-    {
-        std::cout << ">> "
-                  << "           "
-                  << "           "
-                  << "           "
-                  << "           "
-                  << "         0";
-    }
-    else
-    {
-        
-    }
 }

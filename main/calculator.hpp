@@ -10,15 +10,5 @@ private:
     Calculator() = delete;
 
 public:
-    enum EAlgorithm
-    {
-        RAMANUJAN,
-        LEIBNIZ
-    };
-
-    static void calculate(MP& mp, EAlgorithm = RAMANUJAN);
-
-private:
-    static void ramanujan(MP& mp);
-    static void leibniz(MP& mp);
+    static void calculate(MP& mp, UINT_64 digit = 100);
 };
