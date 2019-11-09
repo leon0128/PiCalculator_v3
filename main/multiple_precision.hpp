@@ -61,10 +61,14 @@ public:
     friend bool operator>=(const MP& lhs,
                            const MP& rhs);
 
+    // 符号を反転
+    void inverse(){mIsPositive = !mIsPositive;}
+
     // 階乗
     static MP factorial(INT_64 count);
     // 累乗(指数は正の正数のみ)
     static MP power(const MP& radix, UINT_64 index);
+
     // 絶対値で大きい方を返す
     static const MP& absoluteMax(const MP& lhs, const MP& rhs);
     static       MP& absoluteMax(      MP& lhs,       MP& rhs);
@@ -72,7 +76,7 @@ public:
     static UINT_64 convert(const MP& mp);
 
     // 出力
-    static void output(const MP& mp);
+    static void output(const MP& mp, bool isPunctuated = false);
 
 private:
     // 第一引数に第二引数と第三引数の加算結果を格納
@@ -80,7 +84,7 @@ private:
     static void addition(MP& dst,
                          const MP& lhs, const MP& rhs);
     // 第一引数に第二引数と第三引数の減算結果を格納
-    // 演算結果の符号は |lhs| > |rhs| なら lhs の値が使用される
+    // 演算結果の符号は 呼び出し元で設定
     static void subtraction(MP& dst,
                             const MP& lhs, const MP& rhs);
     // 第一引数に第二引数と第三引数の乗算結果を格納
@@ -97,11 +101,8 @@ private:
     // 最上位が 0 の場合、その要素を削除
     // 最下位が 0 の場合、その要素の削除
     void shrink();
-    // 数値の開始地点の取得 (1.0 == 0, 0.1 = -1)
+    // 数値の開始地点の取得 (1.0 : 0, 0.1 : -1)
     INT_64 offset() const; 
-
-    // output の関数
-    static void simpleOutput (const MP& mp);
 
     LEON::vector<UINT_32> mIntegerPart; // 整数部(1 つの要素に 9桁, 10進)
     LEON::vector<UINT_32> mDecimalPart; // 小数部(1 つの要素に 9桁, 10進)

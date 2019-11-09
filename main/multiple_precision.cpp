@@ -175,23 +175,43 @@ MP& MultiplePrecision::operator=(MP&& other)
 MP& MultiplePrecision::operator+=(const MP& other)
 {
     if(mIsPositive == other.mIsPositive)
+    {
         MP::addition(*this, *this, other);
-    else if(!mIsPositive && other.mIsPositive)
-        MP::subtraction(*this, other, *this);
-    else if(mIsPositive && !other.mIsPositive)
-        MP::subtraction(*this, *this, other);
+    }
+    else
+    {
+        const MP& larger
+            = absoluteMax(*this, other);
+        const MP& smaller
+            = (&larger == this)
+                ? other : *this;
+
+        MP::subtraction(*this, larger, smaller);
+        mIsPositive = larger.mIsPositive;
+    }
 
     return *this;
 }
 
 MP& MultiplePrecision::operator-=(const MP& other)
 {
-    if(mIsPositive && other.mIsPositive)
-        MP::subtraction(*this, *this, other);
-    else if(mIsPositive != other.mIsPositive)
+    if(mIsPositive != other.mIsPositive)
+    {
         MP::addition(*this, *this, other);
-    else if(!mIsPositive && !other.mIsPositive)
-        MP::subtraction(*this, *this, other);
+    }
+    else
+    {
+        const MP& larger
+            = absoluteMax(*this, other);
+        const MP& smaller
+            = (&larger == this)
+                ? other : *this;
+
+        MP::subtraction(*this, larger, smaller);
+        mIsPositive
+            = (&larger == this)
+                ? mIsPositive : !mIsPositive;
+    }
     
     return *this;
 }
@@ -213,13 +233,22 @@ MP& MultiplePrecision::operator/=(const MP& other)
 MP operator+(const MP& lhs, const MP& rhs)
 {
     MP mp;
-    
+
     if(lhs.mIsPositive == rhs.mIsPositive)
+    {
         MP::addition(mp, lhs, rhs);
-    else if(!lhs.mIsPositive && rhs.mIsPositive)
-        MP::subtraction(mp, rhs, lhs);
-    else if(lhs.mIsPositive && !rhs.mIsPositive)
-        MP::subtraction(mp, lhs, rhs);
+    }
+    else
+    {
+        const MP& larger
+            = MP::absoluteMax(lhs, rhs);
+        const MP& smaller
+            = (&larger == &lhs)
+                ? rhs : lhs;
+
+        MP::subtraction(mp, larger, smaller);
+        mp.mIsPositive = larger.mIsPositive;
+    }
 
     return mp;
 }
@@ -228,12 +257,23 @@ MP operator-(const MP& lhs, const MP& rhs)
 {
     MP mp;
 
-    if(lhs.mIsPositive && rhs.mIsPositive)
-        MP::subtraction(mp, lhs, rhs);
-    else if(lhs.mIsPositive != rhs.mIsPositive)
+    if(lhs.mIsPositive != rhs.mIsPositive)
+    {
         MP::addition(mp, lhs, rhs);
-    else if(!lhs.mIsPositive && !rhs.mIsPositive)
-        MP::subtraction(mp, lhs, rhs);
+    }
+    else
+    {
+        const MP& larger
+            = MP::absoluteMax(lhs, rhs);
+        const MP& smaller
+            = (&larger == &lhs)
+                ? rhs : lhs;
+
+        MP::subtraction(mp, larger, smaller);
+        mp.mIsPositive
+            = (&larger == &lhs)
+                ? lhs.mIsPositive : !lhs.mIsPositive;
+    }
 
     return mp;
 }
@@ -442,9 +482,9 @@ UINT_64 MultiplePrecision::convert(const MP& mp)
     return val;
 }
 
-void MultiplePrecision::output(const MP& mp)
+void MultiplePrecision::output(const MP& mp, bool isPunctuated)
 {
-    std::cout << (mp.mIsPositive ? "+" : "-");
+    std::cout << (mp.mIsPositive ? "+" : "-") << std::flush;
 
     if(mp.mIntegerPart.empty())
         std::cout << "0";
@@ -469,25 +509,49 @@ void MultiplePrecision::output(const MP& mp)
         }
     }
 
-    std::cout << ".";
+    std::cout << "." << std::flush;
 
-    for(auto iter = mp.mDecimalPart.begin();
-        iter != mp.mDecimalPart.end();
-        iter++)
+    if(isPunctuated)
     {
-        for(int i = MP::CARRY / 10; i >= 1; i /= 10)
+        UINT_64 count = 0;
+        for(auto iter = mp.mDecimalPart.begin();
+            iter != mp.mDecimalPart.end();
+            iter++)
         {
-            if(*iter / i == 0)
-                std::cout << "0";
-            else
+            for(int i = MP::CARRY / 10; i >= 1; i /= 10)
             {
-                std::cout << (*iter);
-                break;
+                if(count++ >= MP::MAX_DEPTH)
+                    break;
+                std::cout << ((*iter / i) % 10);
             }
+            if(count >= MP::MAX_DEPTH)
+                break;
         }
     }
+    else
+    {
+        for(auto iter = mp.mDecimalPart.begin();
+            iter != mp.mDecimalPart.end();
+            iter++)
+        {
+            for(int i = MP::CARRY / 10; i >= 1; i /= 10)
+            {
+                std::cout << (*iter / i);
+                if(*iter / i == 0)
+                    std::cout << "0";
+                else
+                {
+                    std::cout << (*iter);
+                    break;
+                }
+            }
+        }        
+    }
 
-    std::cout << " [" << mp.mDecimalPart.size() * 9 << "]" << std::endl;
+    std::cout << " ["
+              << ((isPunctuated)
+                    ? MP::MAX_DEPTH : mp.mDecimalPart.size() * 9) 
+              << "]" << std::endl;
 }
 
 void MultiplePrecision::addition(MP& dst,
@@ -576,11 +640,8 @@ void MultiplePrecision::subtraction(MP& dst,
                                     const MP& lhs, const MP& rhs)
 {
 
-    const MP& larger
-        = absoluteMax(lhs, rhs);
-    const MP& smaller
-        = (&larger == &lhs)
-            ? rhs : lhs;
+    const MP& larger  = lhs;
+    const MP& smaller = rhs;
 
     UINT_64 dSize
         = (lhs.mDecimalPart.size() > rhs.mDecimalPart.size())
@@ -698,10 +759,6 @@ void MultiplePrecision::subtraction(MP& dst,
                     ? 0 : 1;
         }
     }
-
-    dst.mIsPositive
-        = (&larger == &lhs)
-            ? larger.mIsPositive : !larger.mIsPositive;
 
     dst.shrink();
 }
