@@ -64,7 +64,7 @@ void Calculator::chudnovsky(MP& mp)
         T += a;
     }
     std::cout << "\r" << "                                    " << std::flush;
-    std::cout << "\r" << "root-section: " << std::flush;
+    std::cout << "\r" << "root-section: 0/" << MP::MAX_DEPTH << std::flush;
 
     mp = MP("0.5") * (mp + C / mp);
     mp = MP("0.5") * (mp + C / mp);

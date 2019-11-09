@@ -16,6 +16,8 @@ MultiplePrecision::MultiplePrecision():
     mDecimalPart(),
     mIsPositive(true)
 {
+    mIntegerPart.reserve(MP::MAX_DEPTH + MP::MAX_DEPTH * 1.1);
+    mDecimalPart.reserve(MP::MAX_DEPTH + MP::MAX_DEPTH * 1.1);
 }
 
 MultiplePrecision::MultiplePrecision(INT_64 value):
@@ -23,6 +25,9 @@ MultiplePrecision::MultiplePrecision(INT_64 value):
     mDecimalPart(),
     mIsPositive((value >= 0) ? true : false)
 {
+    mIntegerPart.reserve(MP::MAX_DEPTH + MP::MAX_DEPTH * 1.1);
+    mDecimalPart.reserve(MP::MAX_DEPTH + MP::MAX_DEPTH * 1.1);
+
     if(!mIsPositive)
         value *= -1;
     if(value > INT_64_MAX)
@@ -63,6 +68,9 @@ MultiplePrecision::MultiplePrecision(const char* value):
     mDecimalPart(),
     mIsPositive(true)
 {
+    mIntegerPart.reserve(MP::MAX_DEPTH + MP::MAX_DEPTH * 1.1);
+    mDecimalPart.reserve(MP::MAX_DEPTH + MP::MAX_DEPTH * 1.1);
+
     if(*value == '+')
     {
         mIsPositive = true;
@@ -307,12 +315,12 @@ bool operator==(const MP& lhs, const MP& rhs)
     
     for(UINT_64 i = 0; i < lhs.mIntegerPart.size(); i++)
     {
-        if(lhs.mIntegerPart.at(i) != rhs.mIntegerPart.at(i))
+        if(lhs.mIntegerPart[i] != rhs.mIntegerPart[i])
             return false;
     }
     for(UINT_64 i = 0; i < lhs.mDecimalPart.size(); i++)
     {
-        if(lhs.mDecimalPart.at(i) != rhs.mDecimalPart.at(i))
+        if(lhs.mDecimalPart[i] != rhs.mDecimalPart[i])
             return false;
     }
 
@@ -338,9 +346,9 @@ bool operator<(const MP& lhs, const MP& rhs)
     
     for(UINT_64 i = lhs.mIntegerPart.size(); i > 0; i--)
     {
-        if(lhs.mIntegerPart.at(i - 1) < rhs.mIntegerPart.at(i - 1))
+        if(lhs.mIntegerPart[i - 1] < rhs.mIntegerPart[i - 1])
             return lhs.mIsPositive ? true : false;
-        else if(lhs.mIntegerPart.at(i - 1) > rhs.mIntegerPart.at(i - 1))
+        else if(lhs.mIntegerPart[i - 1] > rhs.mIntegerPart[i - 1])
             return lhs.mIsPositive ? false : true;
     }
     
@@ -349,9 +357,9 @@ bool operator<(const MP& lhs, const MP& rhs)
             ? lhs.mDecimalPart.size() : rhs.mDecimalPart.size();
     for(UINT_64 i = 0; i < dSize; i++)
     {
-        if(lhs.mDecimalPart.at(i) < rhs.mDecimalPart.at(i))
+        if(lhs.mDecimalPart[i] < rhs.mDecimalPart[i])
             return lhs.mIsPositive ? true : false;
-        else if(lhs.mDecimalPart.at(i) > rhs.mDecimalPart.at(i))
+        else if(lhs.mDecimalPart[i] > rhs.mDecimalPart[i])
             return lhs.mIsPositive ? false : true;
     }
     
@@ -375,9 +383,9 @@ bool operator<=(const MP& lhs, const MP& rhs)
     
     for(UINT_64 i = lhs.mIntegerPart.size(); i > 0; i--)
     {
-        if(lhs.mIntegerPart.at(i - 1) < rhs.mIntegerPart.at(i - 1))
+        if(lhs.mIntegerPart[i - 1] < rhs.mIntegerPart[i - 1])
             return lhs.mIsPositive ? true :false;
-        else if(lhs.mIntegerPart.at(i - i) > rhs.mIntegerPart.at(i - 1))
+        else if(lhs.mIntegerPart[i - i] > rhs.mIntegerPart[i - 1])
             return lhs.mIsPositive ? false : true;
     }
 
@@ -386,9 +394,9 @@ bool operator<=(const MP& lhs, const MP& rhs)
             ? lhs.mDecimalPart.size() : rhs.mDecimalPart.size();
     for(UINT_64 i = 0; i < dSize; i++)
     {
-        if(lhs.mDecimalPart.at(i) < rhs.mDecimalPart.at(i))
+        if(lhs.mDecimalPart[i] < rhs.mDecimalPart[i])
             return lhs.mIsPositive ? true : false;
-        else if(lhs.mDecimalPart.at(i) > rhs.mDecimalPart.at(i))
+        else if(lhs.mDecimalPart[i] > rhs.mDecimalPart[i])
             return lhs.mIsPositive ? false : true;
     }
 
@@ -437,9 +445,9 @@ const MP& MultiplePrecision::absoluteMax(const MP& lhs, const MP& rhs)
 
     for(UINT_64 i = lhs.mIntegerPart.size(); i > 0; i--)
     {
-        if(lhs.mIntegerPart.at(i - 1) > rhs.mIntegerPart.at(i - 1))
+        if(lhs.mIntegerPart[i - 1] > rhs.mIntegerPart[i - 1])
             return lhs;
-        else if(lhs.mIntegerPart.at(i - 1) < rhs.mIntegerPart.at(i - 1))
+        else if(lhs.mIntegerPart[i - 1] < rhs.mIntegerPart[i - 1])
             return rhs;
     }
 
@@ -448,9 +456,9 @@ const MP& MultiplePrecision::absoluteMax(const MP& lhs, const MP& rhs)
             ? lhs.mDecimalPart.size() : rhs.mDecimalPart.size();
     for(UINT_64 i = 0; i < dSize; i++)
     {
-        if(lhs.mDecimalPart.at(i) > rhs.mDecimalPart.at(i))
+        if(lhs.mDecimalPart[i] > rhs.mDecimalPart[i])
             return lhs;
-        else if(lhs.mDecimalPart.at(i) < rhs.mDecimalPart.at(i))
+        else if(lhs.mDecimalPart[i] < rhs.mDecimalPart[i])
             return rhs;
     }
 
@@ -476,9 +484,9 @@ UINT_64 MultiplePrecision::convert(const MP& mp)
         return mp.mIntegerPart.front();
     
     UINT_64 val
-        = static_cast<UINT_64>(mp.mIntegerPart.at(1)) *
+        = static_cast<UINT_64>(mp.mIntegerPart[1]) *
           MP::CARRY +
-          static_cast<UINT_64>(mp.mIntegerPart.at(0));
+          static_cast<UINT_64>(mp.mIntegerPart[0]);
     return val;
 }
 
@@ -580,19 +588,19 @@ void MultiplePrecision::addition(MP& dst,
         i > decMinPart.size();
         i--)
     {
-        dst.mDecimalPart.at(i - 1)
-            = decMaxPart.at(i - 1);
+        dst.mDecimalPart[i - 1]
+            = decMaxPart[i - 1];
     }
     for(UINT_64 i = decMinPart.size();
         i > 0;
         i--)
     {
         UINT_64 val
-            = static_cast<UINT_64>(decMinPart.at(i - 1)) +
-              static_cast<UINT_64>(decMaxPart.at(i - 1)) +
+            = static_cast<UINT_64>(decMinPart[i - 1]) +
+              static_cast<UINT_64>(decMaxPart[i - 1]) +
               carry;
         
-        dst.mDecimalPart.at(i - 1)
+        dst.mDecimalPart[i - 1]
             = static_cast<UINT_32>(val % MP::CARRY);
         carry
             = (val >= MP::CARRY)
@@ -604,11 +612,11 @@ void MultiplePrecision::addition(MP& dst,
         i++)
     {
         UINT_64 val
-            = static_cast<UINT_64>(intMinPart.at(i)) +
-              static_cast<UINT_64>(intMaxPart.at(i)) +
+            = static_cast<UINT_64>(intMinPart[i]) +
+              static_cast<UINT_64>(intMaxPart[i]) +
               carry;
         
-        dst.mIntegerPart.at(i)
+        dst.mIntegerPart[i]
             = static_cast<UINT_32>(val % MP::CARRY);
         carry
             = (val >= MP::CARRY)
@@ -619,10 +627,10 @@ void MultiplePrecision::addition(MP& dst,
         i++)
     {
         UINT_64 val
-            = static_cast<UINT_64>(intMaxPart.at(i)) +
+            = static_cast<UINT_64>(intMaxPart[i]) +
               carry;
         
-        dst.mIntegerPart.at(i)
+        dst.mIntegerPart[i]
             = static_cast<UINT_32>(val % MP::CARRY);
         carry
             = (val >= MP::CARRY)
@@ -662,8 +670,8 @@ void MultiplePrecision::subtraction(MP& dst,
             i > smaller.mDecimalPart.size();
             i--)
         {
-            dst.mDecimalPart.at(i - 1)
-                = larger.mDecimalPart.at(i - 1);
+            dst.mDecimalPart[i - 1]
+                = larger.mDecimalPart[i - 1];
         }
     }
     else if(larger.mDecimalPart.size() < smaller.mDecimalPart.size())
@@ -675,9 +683,9 @@ void MultiplePrecision::subtraction(MP& dst,
             UINT_64 val
                 = MP::CARRY -
                   carry     -
-                  static_cast<UINT_64>(smaller.mDecimalPart.at(i - 1));
+                  static_cast<UINT_64>(smaller.mDecimalPart[i - 1]);
             
-            dst.mDecimalPart.at(i - 1)
+            dst.mDecimalPart[i - 1]
                 = static_cast<UINT_32>(val % MP::CARRY);
             carry
                 = (val >= MP::CARRY)
@@ -693,11 +701,11 @@ void MultiplePrecision::subtraction(MP& dst,
     {
         UINT_64 val
             = MP::CARRY +
-              static_cast<UINT_64>(larger.mDecimalPart.at(i - 1)) -
-              static_cast<UINT_64>(smaller.mDecimalPart.at(i - 1)) -
+              static_cast<UINT_64>(larger.mDecimalPart[i - 1]) -
+              static_cast<UINT_64>(smaller.mDecimalPart[i - 1]) -
               carry;
         
-        dst.mDecimalPart.at(i - 1)
+        dst.mDecimalPart[i - 1]
             = static_cast<UINT_32>(val % MP::CARRY);
         carry
             = (val >= MP::CARRY)
@@ -713,11 +721,11 @@ void MultiplePrecision::subtraction(MP& dst,
     {
         UINT_64 val
             = MP::CARRY +
-              static_cast<UINT_64>(larger.mIntegerPart.at(i)) -
-              static_cast<UINT_64>(smaller.mIntegerPart.at(i)) -
+              static_cast<UINT_64>(larger.mIntegerPart[i]) -
+              static_cast<UINT_64>(smaller.mIntegerPart[i]) -
               carry;
         
-        dst.mIntegerPart.at(i)
+        dst.mIntegerPart[i]
             = static_cast<UINT_32>(val % MP::CARRY);
         carry
             = (val >= MP::CARRY)
@@ -731,10 +739,10 @@ void MultiplePrecision::subtraction(MP& dst,
         {
             UINT_64 val
                 = MP::CARRY +
-                  static_cast<UINT_64>(larger.mIntegerPart.at(i)) -
+                  static_cast<UINT_64>(larger.mIntegerPart[i]) -
                   carry;
             
-            dst.mIntegerPart.at(i)
+            dst.mIntegerPart[i]
                 = static_cast<UINT_32>(val % MP::CARRY);
             carry
                 = (val >= MP::CARRY)
@@ -749,10 +757,10 @@ void MultiplePrecision::subtraction(MP& dst,
         {
             UINT_64 val
                 = MP::CARRY -
-                  static_cast<UINT_64>(smaller.mIntegerPart.at(i)) -
+                  static_cast<UINT_64>(smaller.mIntegerPart[i]) -
                   carry;
             
-            dst.mIntegerPart.at(i)
+            dst.mIntegerPart[i]
                 = static_cast<UINT_32>(val % MP::CARRY);
             carry
                 = (val >= MP::CARRY)
@@ -792,8 +800,8 @@ void MultiplePrecision::multiplication(MP& dst,
             j--)
         {
             UINT_64 val
-                = static_cast<UINT_64>(lhs.mDecimalPart.at(j - 1)) *
-                  static_cast<UINT_64>(rhs.mDecimalPart.at(i - 1)) +
+                = static_cast<UINT_64>(lhs.mDecimalPart[j - 1]) *
+                  static_cast<UINT_64>(rhs.mDecimalPart[i - 1]) +
                   carry;
             
             UINT_32 v
@@ -808,8 +816,8 @@ void MultiplePrecision::multiplication(MP& dst,
             j++)
         {
             UINT_64 val
-                = static_cast<UINT_64>(lhs.mIntegerPart.at(j))     *
-                  static_cast<UINT_64>(rhs.mDecimalPart.at(i - 1)) +
+                = static_cast<UINT_64>(lhs.mIntegerPart[j])     *
+                  static_cast<UINT_64>(rhs.mDecimalPart[i - 1]) +
                   carry;
             
             UINT_32 v
@@ -839,8 +847,8 @@ void MultiplePrecision::multiplication(MP& dst,
             j--)
         {
             UINT_64 val
-                = static_cast<UINT_64>(lhs.mDecimalPart.at(j - 1)) *
-                  static_cast<UINT_64>(rhs.mIntegerPart.at(i))     +
+                = static_cast<UINT_64>(lhs.mDecimalPart[j - 1]) *
+                  static_cast<UINT_64>(rhs.mIntegerPart[i])     +
                   carry;
             
             UINT_32 v
@@ -855,8 +863,8 @@ void MultiplePrecision::multiplication(MP& dst,
             j++)
         {
             UINT_64 val
-                = static_cast<UINT_64>(lhs.mIntegerPart.at(j)) *
-                  static_cast<UINT_64>(rhs.mIntegerPart.at(i)) +
+                = static_cast<UINT_64>(lhs.mIntegerPart[j]) *
+                  static_cast<UINT_64>(rhs.mIntegerPart[i]) +
                   carry;
             
             UINT_32 v
@@ -882,7 +890,7 @@ void MultiplePrecision::multiplication(MP& dst,
     for(UINT_64 i = dSize; i > 0; i--)
     {
         result.mDecimalPart
-            .push_back(result.mIntegerPart.at(i - 1));
+            .push_back(result.mIntegerPart[i - 1]);
     }
     result.mIntegerPart.erase(result.mIntegerPart.begin(),
                               result.mIntegerPart.begin() + dSize);
@@ -926,8 +934,8 @@ void MultiplePrecision::division(MP& dst,
     {
         divisor
             = MP::CARRY *
-              static_cast<UINT_64>(rhs.mDecimalPart.at(rhsOff * -1 - 1)) +
-              static_cast<UINT_64>(rhs.mDecimalPart.at(rhsOff * -1));
+              static_cast<UINT_64>(rhs.mDecimalPart[rhsOff * -1 - 1]) +
+              static_cast<UINT_64>(rhs.mDecimalPart[rhsOff * -1]);
     }
     else if(rhs.mIntegerPart.size() == 1 &&
             rhs.mDecimalPart.empty())
@@ -954,7 +962,7 @@ void MultiplePrecision::division(MP& dst,
             return true;
         for(UINT_64 i = 0; i < diff.mDecimalPart.size(); i++)
         {
-            if(diff.mDecimalPart.at(i) != 0)
+            if(diff.mDecimalPart[i] != 0)
             {
                 if(i * 9 > MAX_DEPTH)
                     return true;
@@ -990,9 +998,9 @@ void MultiplePrecision::division(MP& dst,
         if(digit >= 0)
         {
             temp.mIntegerPart.resize(digit + 2, 0);
-            temp.mIntegerPart.at(digit + 1)
+            temp.mIntegerPart[digit + 1]
                 = static_cast<UINT_32>(val / MP::CARRY);
-            temp.mIntegerPart.at(digit)
+            temp.mIntegerPart[digit]
                 = static_cast<UINT_32>(val % MP::CARRY);
         }
         else if(digit == -1)
@@ -1006,9 +1014,9 @@ void MultiplePrecision::division(MP& dst,
         {
             digit *= -1;
             temp.mDecimalPart.resize(digit, 0);
-            temp.mDecimalPart.at(digit - 2)
+            temp.mDecimalPart[digit - 2]
                 = static_cast<UINT_32>(val / MP::CARRY);
-            temp.mDecimalPart.at(digit - 1)
+            temp.mDecimalPart[digit - 1]
                 = static_cast<UINT_32>(val % MP::CARRY);
         }
 
@@ -1031,8 +1039,8 @@ void MultiplePrecision::digitAlignment(  INT_64& digit,
     if(lhs.mIntegerPart.size() >= 2)
     {
         dividend
-            = *lhs.mIntegerPart.rbegin() * MP::CARRY +
-              *(lhs.mIntegerPart.rbegin() + 1);
+            = lhs.mIntegerPart[lhs.mIntegerPart.size() - 1] * MP::CARRY +
+              lhs.mIntegerPart[lhs.mIntegerPart.size() - 2];
         digit
             = lhs.mIntegerPart.size() - 2;
     }
@@ -1048,19 +1056,19 @@ void MultiplePrecision::digitAlignment(  INT_64& digit,
     else if(lhs.mDecimalPart.size() >= 2)
     {
         digit = 0;
-        while(lhs.mDecimalPart.at(digit) == 0)
+        while(lhs.mDecimalPart[digit] == 0)
             digit++;
 
         if(lhs.mDecimalPart.size() >= static_cast<UINT_64>(digit) + 2)
         {
             dividend
-                = lhs.mDecimalPart.at(digit) * MP::CARRY +
-                  lhs.mDecimalPart.at(digit + 1);
+                = lhs.mDecimalPart[digit] * MP::CARRY +
+                  lhs.mDecimalPart[digit + 1];
         }
         else
         {
             dividend
-                = lhs.mDecimalPart.at(digit) * MP::CARRY;
+                = lhs.mDecimalPart[digit] * MP::CARRY;
         }
 
         digit
@@ -1119,7 +1127,7 @@ INT_64 MultiplePrecision::offset() const
 
     for(UINT_64 i = 0; i < mDecimalPart.size(); i++)
     {
-        if(mDecimalPart.at(i) != 0)
+        if(mDecimalPart[i] != 0)
             return static_cast<INT_64>(i) * -1;
     }
     
