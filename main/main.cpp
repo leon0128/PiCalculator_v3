@@ -7,8 +7,7 @@ int main(int argc, char** argv)
     if(argc == 1)
         Calculator::calculate(mp);
     else
-        Calculator::calculate(mp, MP::convert(MP(argv[1])),
-                              Calculator::CHUDNOVSKY);
+        Calculator::calculate(mp, MP::convert(MP(argv[1])));
 
     MP::output(mp, true);
 
