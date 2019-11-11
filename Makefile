@@ -1,4 +1,4 @@
-CXX      = g++-8
+CXX      = g++
 CXXFLAGS = -std=c++11 -O3
 DEBUG    = -Wall -g3
 OBJS     = $(patsubst %.cpp, %.o, $(wildcard */*.cpp))
