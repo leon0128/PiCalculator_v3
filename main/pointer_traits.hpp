@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include <type_traits> // remove_reference
+#include "type_traits.hpp"
 
 namespace LEON
 {
@@ -44,10 +44,10 @@ private:
 public:
     // メンバ型
     using pointer         = Ptr;
-    using element_type    = typename ::std::remove_reference<decltype(*get_element_type<pointer>(nullptr))>::type;
-    using difference_type = typename ::std::remove_reference<decltype(*get_difference_type<pointer>(nullptr))>::type;
+    using element_type    = typename remove_reference<decltype(*get_element_type<pointer>(nullptr))>::type;
+    using difference_type = typename remove_reference<decltype(*get_difference_type<pointer>(nullptr))>::type;
     template<typename U>
-    using rebind          = typename ::std::remove_reference<decltype(*get_rebind<pointer, U>(nullptr))>::type;
+    using rebind          = typename remove_reference<decltype(*get_rebind<pointer, U>(nullptr))>::type;
 
     // 静的メンバ関数
     static pointer pointer_to(element_type& v){return pointer::pointer_to(v);}

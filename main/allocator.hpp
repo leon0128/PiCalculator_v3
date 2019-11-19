@@ -8,7 +8,7 @@
 #pragma once
 
 #include <cstdlib>     // malloc(), free()
-#include <type_traits> // true_type
+#include "type_traits.hpp"
 
 namespace LEON
 {
@@ -18,8 +18,8 @@ class allocator
 {
 public:
     using value_type      = T;
-    using is_always_equal = ::std::true_type;
-    using propagate_on_container_move_assignment = ::std::true_type;
+    using is_always_equal = true_type;
+    using propagate_on_container_move_assignment = true_type;
 
     // コンストラクタ
     allocator()                 noexcept {}

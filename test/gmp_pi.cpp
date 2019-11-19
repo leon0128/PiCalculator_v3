@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 
     int count = digit / 14;
 
-    PI = mpf_class(0, digit * std::log2(10));
+    PI = mpf_class(0, digit * log2(10));
 
     PQT pqt = compute(0, count);
 

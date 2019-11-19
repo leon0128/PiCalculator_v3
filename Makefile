@@ -1,7 +1,7 @@
 CXX      = g++
 CXXFLAGS = -std=c++11 -O3
 DEBUG    = -Wall -g3
-OBJS     = $(patsubst %.cpp, %.o, $(wildcard */*.cpp))
+OBJS     = $(patsubst %.cpp, %.o, $(wildcard main/*.cpp))
 PROGRAM  = Calculator
 
 all: $(PROGRAM)

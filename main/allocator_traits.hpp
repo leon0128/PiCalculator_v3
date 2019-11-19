@@ -26,9 +26,9 @@
 #pragma once
 
 #include "pointer_traits.hpp"
-#include <type_traits>         // make_unsigned, is_empty, remove_reference ::std::true_type, ::std::false_type
-#include <limits>              // numeric_limits::max (時間があれば max() は実装するかも)
-#include <utility>             // forward
+#include "type_traits.hpp"
+#include "limits.hpp"
+#include "utility.hpp"
 namespace LEON
 {
 
@@ -52,7 +52,7 @@ private:
     static value_type** get_pointer(...){return nullptr;}
 
 public:
-    using pointer = typename ::std::remove_reference<decltype(*get_pointer<allocator_type>(nullptr))>::type;
+    using pointer = typename remove_reference<decltype(*get_pointer<allocator_type>(nullptr))>::type;
 
 private:
     using traits = pointer_traits<pointer>;
@@ -63,7 +63,7 @@ private:
     template<typename>
     static DEFAULT_CONST_POINTER* get_const_pointer(...){return nullptr;} 
 public:
-    using const_pointer = typename ::std::remove_reference<decltype(*get_const_pointer<allocator_type>(nullptr))>::type;
+    using const_pointer = typename remove_reference<decltype(*get_const_pointer<allocator_type>(nullptr))>::type;
 
 private:
     // void_pointer
@@ -72,7 +72,7 @@ private:
     template<typename>
     static DEFAULT_VOID_POINTER* get_void_pointer(...){return nullptr;}
 public:
-    using void_pointer = typename ::std::remove_reference<decltype(*get_void_pointer<allocator_type>(nullptr))>::type;
+    using void_pointer = typename remove_reference<decltype(*get_void_pointer<allocator_type>(nullptr))>::type;
 
 private:
     // const_void_pointer
@@ -81,7 +81,7 @@ private:
     template<typename>
     static DEFAULT_CONST_VOID_POINTER* get_const_void_pointer(...){return nullptr;}
 public:
-    using const_void_pointer = typename ::std::remove_reference<decltype(*get_const_void_pointer<allocator_type>(nullptr))>;
+    using const_void_pointer = typename remove_reference<decltype(*get_const_void_pointer<allocator_type>(nullptr))>::type;
 
 private:
     // difference_type(fix)
@@ -89,7 +89,7 @@ private:
     struct _difference_type
         {using type = typename pointer_traits<P>::difference_type;};
     template<typename A, typename P>
-    struct _difference_type<A, P, ::std::__void_t<typename A::difference_type>>
+    struct _difference_type<A, P, void_t<typename A::difference_type>>
         {using type = typename A::difference_type;};
 public:
     using difference_type = typename _difference_type<allocator_type, pointer>::type;
@@ -97,9 +97,9 @@ public:
 private:
     // size_type(fix)
     template<typename A, typename D, typename = void>
-    struct _size_type : ::std::make_unsigned<D>{};
+    struct _size_type : make_unsigned<D>{};
     template<typename A, typename D>
-    struct _size_type<A, D, ::std::__void_t<typename A::size_type>>
+    struct _size_type<A, D, void_t<typename A::size_type>>
         {using type = typename A::size_type;};
 public:
     using size_type = typename _size_type<allocator_type, difference_type>::type;
@@ -109,37 +109,37 @@ private:
     template<typename A>
     static typename A::propagate_on_container_copy_assignment* get_propagate_on_container_copy_assignment(typename A::propagate_on_container_copy_assignment*){return nullptr;}
     template<typename>
-    static ::std::false_type* get_propagate_on_container_copy_assignment(...){return nullptr;}
+    static false_type* get_propagate_on_container_copy_assignment(...){return nullptr;}
 public:
-    using propagate_on_container_copy_assignment = typename ::std::remove_reference<decltype(*get_propagate_on_container_copy_assignment<allocator_type>(nullptr))>::type;
+    using propagate_on_container_copy_assignment = typename remove_reference<decltype(*get_propagate_on_container_copy_assignment<allocator_type>(nullptr))>::type;
 
 private:
     // propagate_on_container_move_assignment
     template<typename A>
     static typename A::propagate_on_container_move_assignment* get_propagate_on_container_move_assignment(typename A::propagate_on_container_move_assignment*){return nullptr;}
     template<typename>
-    static ::std::false_type* get_propagate_on_container_move_assignment(...){return nullptr;}
+    static false_type* get_propagate_on_container_move_assignment(...){return nullptr;}
 public:
-    using propagate_on_container_move_assignment = typename ::std::remove_reference<decltype(*get_propagate_on_container_move_assignment<allocator_type>(nullptr))>;
+    using propagate_on_container_move_assignment = typename remove_reference<decltype(*get_propagate_on_container_move_assignment<allocator_type>(nullptr))>::type;
 
 private:
     // propagate_on_container_swap
     template<typename A>
     static typename A::propagate_on_container_swap* get_propagate_on_container_swap(typename A::propagate_on_container_swap*){return nullptr;}
     template<typename>
-    static ::std::false_type* get_propagate_on_container_swap(...){return nullptr;}
+    static false_type* get_propagate_on_container_swap(...){return nullptr;}
 public:
-    using propagate_on_container_swap = typename ::std::remove_reference<decltype(*get_propagate_on_container_swap<allocator_type>(nullptr))>::type;
+    using propagate_on_container_swap = typename remove_reference<decltype(*get_propagate_on_container_swap<allocator_type>(nullptr))>::type;
 
 private:
     // is_always_equal
-    using default_is_always_equal = typename ::std::is_empty<allocator_type>::type;
+    using default_is_always_equal = typename is_empty<allocator_type>::type;
     template<typename A>
     static typename A::is_always_equal* get_is_always_equal(typename A::is_always_equal*){return nullptr;}
     template<typename A>
     static default_is_always_equal* get_is_always_equal(...){return nullptr;}
 public:
-    using is_always_equal = typename ::std::remove_reference<decltype(*get_is_always_equal<allocator_type>(nullptr))>::type;
+    using is_always_equal = typename remove_reference<decltype(*get_is_always_equal<allocator_type>(nullptr))>::type;
 
 private:
     // rebind_alloc<U>
@@ -170,7 +170,7 @@ private:
     //     {return alloc.max_size();}
     template<typename A>
     static size_type _max_size(A&, ...)
-        {return ::std::numeric_limits<size_type>::max() / sizeof(value_type);}
+        {return numeric_limits<size_type>::max() / sizeof(value_type);}
     // construct
     // template<typename A, typename T, typename... Args>
     // static void _construct(A& alloc, T* ptr, int, Args&&... args)
@@ -245,7 +245,7 @@ public:
     static void construct(allocator_type& alloc,
                           T* ptr,
                           Args&&... args)
-        {::new(static_cast<void*>(ptr)) T(::std::forward<Args>(args)...);}
+        {::new(static_cast<void*>(ptr)) T(forward<Args>(args)...);}
     // destroy
     template<typename T>
     static void destroy(allocator_type& alloc,

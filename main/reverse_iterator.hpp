@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <iterator> // ::std::random_access_iterator_tag
+// #include <iterator> // ::std::random_access_iterator_tag
 
 namespace LEON
 {
@@ -26,7 +26,7 @@ private:
     using size_type = typename Container::size_type;
 
 public:
-    using iterator_tag    = ::std::random_access_iterator_tag;
+    // using iterator_tag    = ::std::random_access_iterator_tag;
     using value_type      = typename Container::value_type;
     using difference_type = typename Container::difference_type;
     using pointer         = typename Container::pointer;

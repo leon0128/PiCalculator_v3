@@ -1,7 +1,7 @@
 /* 動的配列 vector
 * 
 * ::std::vector 同様、各要素はメモリ上に連続して配置される
-* bool 特殊化は無理
+* bool 特殊化 は行っていない
 *
 *  template を使用した overload が正しく動作しない
 *  優先度の問題？
@@ -24,11 +24,12 @@
 #include "allocator_traits.hpp"
 #include "iterator.hpp"
 #include "reverse_iterator.hpp"
+#include "type_traits.hpp"
+#include "utility.hpp"
 
-#include <type_traits> // is_trivially_destructible, is_copy_constructible
-#include <utility>     // move, initializer_list
-
+#include <initializer_list> // initializer_list
 #include <iostream>
+#include <stdexcept>
 
 namespace LEON
 {
@@ -109,7 +110,7 @@ public:
         vector(other,
                traits::select_on_container_copy_construction(mAllocator)){}
     vector(vector&& other):
-        vector(std::move(other),
+        vector(move(other),
                traits::select_on_container_copy_construction(mAllocator)){}
     vector(const vector& other,
            const allocator_type& alloc):
@@ -157,7 +158,7 @@ public:
     // デストラクタ
     ~vector()
     {
-        if(!::std::is_trivially_destructible<value_type>::value)
+        if(!is_trivially_destructible<value_type>::value)
         {
             for(size_type i = 0; i < mSize; i++)
             {
@@ -175,7 +176,7 @@ public:
         if(this == &other)
             return *this;
 
-        if(!::std::is_trivially_destructible<value_type>::value)
+        if(!is_trivially_destructible<value_type>::value)
         {
             for(size_type i = 0; i < mSize; i++)
             {
@@ -207,7 +208,7 @@ public:
         if(this == &other)
             return *this;
         
-        if(!::std::is_trivially_destructible<value_type>::value)
+        if(!is_trivially_destructible<value_type>::value)
         {
             for(size_type i = 0; i < mSize; i++)
             {
@@ -228,7 +229,7 @@ public:
     }
     vector& operator=(::std::initializer_list<value_type> list)
     {
-        if(!::std::is_trivially_destructible<value_type>::value)
+        if(!is_trivially_destructible<value_type>::value)
         {
             for(size_type i = 0; i < mSize; i++)
             {
@@ -314,7 +315,7 @@ public:
         mData = traits::allocate(mAllocator,
                                  sz);
         
-        if(::std::is_copy_constructible<value_type>::value)
+        if(is_copy_constructible<value_type>::value)
         {
             for(size_type i = 0; i < mSize; i++)
             {
@@ -329,11 +330,11 @@ public:
             {
                 traits::construct(mAllocator,
                                   mData + i,
-                                  ::std::move(*(lastData + i)));
+                                  move(*(lastData + i)));
             }
         }
 
-        if(!::std::is_trivially_destructible<value_type>::value)
+        if(!is_trivially_destructible<value_type>::value)
         {
             for(size_type i = 0; i < mSize; i++)
             {
@@ -354,7 +355,7 @@ public:
         mData = traits::allocate(mAllocator,
                                  mSize);
         
-        if(::std::is_copy_constructible<value_type>::value)
+        if(is_copy_constructible<value_type>::value)
         {
             for(size_type i = 0; i < mSize; i++)
             {
@@ -369,11 +370,11 @@ public:
             {
                 traits::construct(mAllocator,
                                   mData + i,
-                                  ::std::move(*(lastData + i)));
+                                  move(*(lastData + i)));
             }
         }
 
-        if(!::std::is_trivially_destructible<value_type>::value)
+        if(!is_trivially_destructible<value_type>::value)
         {
             for(size_type i = 0; i < mSize; i++)
             {
@@ -469,7 +470,7 @@ public:
 
         traits::construct(mAllocator,
                           mData + mSize,
-                          ::std::move(value));
+                          move(value));
         mSize++;
     }
     // emplace_back
@@ -481,7 +482,7 @@ public:
 
         traits::construct(mAllocator,
                           mData + mSize,
-                          ::std::forward<Args>(args)...);
+                          forward<Args>(args)...);
         mSize++;
     }
     // pop_back
@@ -489,7 +490,7 @@ public:
     {
         if(!empty())
         {
-            if(!::std::is_trivially_destructible<value_type>::value)
+            if(!is_trivially_destructible<value_type>::value)
             {
                 traits::destroy(mAllocator,
                                 mData + mSize - 1);
@@ -511,8 +512,8 @@ public:
         {
             traits::construct(mAllocator,
                               mData + i,
-                              ::std::move(*(mData + i - 1)));
-            if(!::std::is_trivially_destructible<value_type>::value)
+                              move(*(mData + i - 1)));
+            if(!is_trivially_destructible<value_type>::value)
             {
                 traits::destroy(mAllocator,
                                 mData + i - 1);
@@ -521,7 +522,7 @@ public:
         
         traits::construct(mAllocator,
                           mData + pos.mIndex,
-                          ::std::move(value));
+                          move(value));
         
         mSize++;
         return iterator(this, pos.mIndex);
@@ -538,7 +539,7 @@ public:
             traits::construct(mAllocator,
                               mData + i + n - 1,
                               *(mData + i - 1));
-            if(!::std::is_trivially_destructible<value_type>::value)
+            if(!is_trivially_destructible<value_type>::value)
             {
                 traits::destroy(mAllocator,
                                 mData + i - 1);
@@ -568,7 +569,7 @@ public:
             traits::construct(mAllocator,
                               mData + i + n - 1,
                               *(mData + i - 1));
-            if(!::std::is_trivially_destructible<value_type>::value)
+            if(!is_trivially_destructible<value_type>::value)
             {
                 traits::destroy(mAllocator,
                                 mData + i - 1);
@@ -597,8 +598,8 @@ public:
         {
             traits::construct(mAllocator,
                               mData + i,
-                              ::std::move(*(mData + i - 1)));
-            if(!::std::is_trivially_destructible<value_type>::value)
+                              move(*(mData + i - 1)));
+            if(!is_trivially_destructible<value_type>::value)
             {
                 traits::destroy(mAllocator,
                                 mData + i - 1);
@@ -607,7 +608,7 @@ public:
 
         traits::construct(mAllocator,
                           mData + pos.mIndex,
-                          ::std::forward<Args>(args)...);
+                          forward<Args>(args)...);
 
         mSize++;
         return iterator(this, pos.mIndex);
@@ -618,7 +619,7 @@ public:
     iterator erase(const_iterator first,
                    const_iterator last)
     {
-        if(!::std::is_trivially_destructible<value_type>::value)
+        if(!is_trivially_destructible<value_type>::value)
         {
             for(auto iter = first; iter != last; iter++)
             {
@@ -628,10 +629,10 @@ public:
         }
 
         auto n = last - first;
-        if(::std::is_move_assignable<value_type>::value)
+        if(is_move_assignable<value_type>::value)
         {
             for(size_type i = last.mIndex; i < mSize; i++)
-                *(mData + i - n) = ::std::move(*(mData + i));
+                *(mData + i - n) = move(*(mData + i));
         }
         else
         {
@@ -665,7 +666,7 @@ public:
     // clear
     void clear()
     {
-        if(!::std::is_trivially_destructible<value_type>::value)
+        if(!is_trivially_destructible<value_type>::value)
         {
             for(size_type i = 0; i < mSize; i++)
             {
